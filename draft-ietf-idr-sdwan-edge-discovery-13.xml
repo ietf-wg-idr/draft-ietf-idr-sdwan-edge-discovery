@@ -1,0 +1,1598 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?Pub Inc?>
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="std" docName="draft-ietf-idr-sdwan-edge-discovery-13"
+     ipr="trust200902">
+  <front>
+    <title abbrev="SDWAN Edge Discovery">BGP UPDATE for SD-WAN Edge Discovery</title>
+
+    <author fullname="Linda Dunbar" initials="L. " surname="Dunbar">
+      <organization>Futurewei</organization>
+
+      <address>
+		<postal>
+          <city>Dallas, TX</city>
+          <country>USA</country>
+		</postal>
+        <email>ldunbar@futurewei.com</email>
+      </address>
+    </author>
+
+    <author fullname="Kausik Majumdar" initials="K." surname="Majumdar">
+      <organization>Microsoft Azure</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city>California</city>
+
+          <country>USA</country>
+        </postal>
+
+        <email>kmajumdar@microsoft.com</email>
+      </address>
+    </author>
+
+    <author fullname="Susan Hares" initials="S. " surname="Hares">
+      <organization>Hickory Hill Consulting</organization>
+
+      <address>
+        <postal>
+          <street></street>
+
+          <city> </city>
+          <country>USA</country>
+        </postal>
+        <email>shares@ndzh.com</email>
+      </address>
+    </author>
+
+    <author fullname="Robert Raszuk" initials="R. " surname="Raszuk">
+      <organization>Arrcus</organization>
+
+      <address>
+        <postal>
+          <street></street>
+
+          <code></code>
+
+          <country>USA</country>
+        </postal>
+
+        <email>robert@raszuk.net</email>
+      </address>
+    </author>
+
+    <author fullname="Venkit Kasiviswanathan" initials="V" surname="Kasiviswanathan">
+      <organization>Arista</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city></city>
+
+          <country>USA</country>
+        </postal>
+
+        <email>venkit@arista.com</email>
+      </address>
+    </author>
+
+
+    <date year="2024"/>
+
+    <abstract>
+     <t>The document describes the encoding of BGP UPDATE messages for the 
+	 SD-WAN edge node property discovery.</t> 
+	<t>In the context of this document, BGP Route Reflector (RR) is the component of the 
+	SD-WAN Controller that receives the BGP UPDATE from SD-WAN edges 
+	and in turns propagates the information to the intended peers 
+	that are authorized to communicate via the SD-WAN overlay network.</t>
+
+    </abstract>
+
+    <note title="Requirements Language">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+      document are to be interpreted as described in <xref
+      target="RFC2119"></xref> <xref target="RFC8174"></xref>
+      when, and only when, they appear in all
+      capitals, as shown here.</t>
+    </note>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      
+
+      <t>BGP [RFC4271] can be used as a control plane 
+	  for a SD-WAN network. SD-WAN network refers to a policy-driven network 
+	  over multiple heterogeneous underlay networks to get better 
+	  WAN bandwidth management, visibility, and control. </t>
+	  <t>The document describes BGP UPDATE messages for an SD-WAN edge 
+	  node to advertise its properties to its RR which then propagates 
+	  that information to the authorized peers. 
+	  </t>
+   </section>
+
+   <section title="Conventions used in this document">
+     <t>The following acronyms and terms are used in this document: </t>
+	 <list
+          style="hanging">
+          <t hangText="Cloud DC:">Off-Premises Data Centers that usually host applications and workload owned by different organizations or tenants.</t>
+		  <t hangText="Color-EC:">Color Extended Community defined in [RFC9012].</t>  
+		  <t hangText="Controller:">Used interchangeably with SD-WAN controller to manage SD-WAN overlay path creation/deletion 
+		  and monitor the path conditions between sites.</t>
+		 <t hangText="CPE:">Customer (Edge) Premises Equipment</t>
+		  <t hangText="CPE-Based VPN:">Virtual Private Secure network formed among CPEs. This is to differentiate such VPNs from most commonly used PE-based VPNs discussed in [RFC4364].</t>
+		  <t hangText="Encaps-EC:">Encapsulation Extended Community defined in [RFC9012].</t>
+		  <t hangText="MP-NLRI:">Multi-Protocol Network Layer Reachability Information [MP_REACH_NLRI] Path Attribute defined in [RFC4760].</t>
+		  <t hangText="RR:">Route Reflector</t>
+		  <t hangText="SD-WAN:">An overlay connectivity service that optimizes transport of IP Packets over one or more Underlay Connectivity Services by recognizing applications (Application Flows) and determining forwarding behavior by applying Policies to them. [MEF-70.1]</t>
+		   <t hangText="SD-WAN Endpoint:">can be the SD-WAN edge node address, a WAN port address (logical or physical) of a 
+		   SD-WAN edge node, or a client port address.</t>
+		   <t hangText="SD-WAN Hybrid tunnel:">A single logical tunnel that combines several links of different 
+		   encapsulation iinto a single tunnel.</t>
+		  <t hangText="RT-EC:"> Route Target Extended Community [RFC4360] </t>
+ 		  <t hangText="TEA:"> Tunnel Encapsulation Path Attribute [RFC9012] </t>
+		  <t hangText="VPN:">Virtual Private Network</t>
+		  <t hangText="VRF:">VPN Routing and Forwarding instance</t>
+		  <t hangText="WAN:">Wide Area Network</t>
+
+	</list> 
+	<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 [RFC8174] when, and only when, they appear in all capitals, as shown here.
+	</t>
+   </section>
+	<section title="Framework of SD-WAN Edge Discovery">
+	<section title="The Objectives of SD-WAN Edge Discovery">
+	<t>
+	The objectives of SD-WAN edge discovery for an SD-WAN edge node 
+	are to discover its authorized BGP peers and each peer's associated properities
+	in order to establish secure overlay tunnels [Net2Cloud]. 	The attributes to be propagated include: </t> 
+	<list style="symbol">
+	<t>the SD-WAN (client) VPNs information, </t>
+	<t>the attached routes under the SD-WAN VPNs, and </t>
+	<t>the properties of the underlay networks over 
+	 which the client routes can be carried.</t>
+	</list>
+	<t>Some SD-WAN peers are connected by both trusted VPNs and untrusted public networks. 
+	Some SD-WAN peers are connected only by untrusted public networks. 
+	For the traffic over untrusted networks, IPsec Security Associations (IPsec SA) 
+	must be established and maintained. For the trusted VPNs, IPsec Security
+	associations may not be set-up. If an edge node has network ports behind a NAT, 
+	the NAT properties need to be discovered by the authorized SD-WAN peers.
+	</t>
+	<t>Like any VPN networks, the attached client routes belonging 
+	to specific SD-WAN VPNs can only be exchanged with the SD-WAN 
+	peer nodes authorized to communicate.</t>
+	</section>
+	<section title="Comparing with Pure IPsec VPN">
+	<t> A pure IPsec VPN has IPsec tunnels connecting all edge nodes over public networks. 
+	Therefore, it requires stringent authentication and authorization (i.e., IKE Phase 1) 
+	before other properties of IPsec SA can be exchanged. The IPsec Security Association (SA) 
+	between two untrusted nodes typically requires the following configurations and message exchanges:
+	</t>
+	<t>
+	<list>
+	<t>
+	<list style="hanging">
+	<t hangText="IPsec IKEV2:">messages sent to authenticate with each other. </t> 
+	<t hangText="Establish IPsec SA">: requires the following set-up  
+		<list style="symbol">
+		<t>Local key configuration, </t>
+		<t>Setting the Remote Peer address,  </t>
+		<t>Information from IKEv2 Proposal directly sent to peer (Encryption method, Integrity sha512, etc.), and</t>
+		<t>Transform set. </t>
+		</list>	
+	 </t>
+	<t hangText="Attached client prefixes discovery acchieved by:"> 
+		<list style="symbol">
+		<t>Running routing protocol within each IPsec SA. </t>
+		<t>If multiple IPsec SAs between two peer nodes are established to achieve load sharing, 
+		each IPsec tunnel needs to run its own routing protocol to exchange client routes attached to the edges.</t>
+		</list>	
+		</t>
+	<t hangText="Set-up Access List or Traffic Selector:">such as Permit Local-IP1, Remote-IP2, and other parameters.</t>
+	</list>
+	</t>
+	</list>
+	</t>
+	<t>In a BGP-controlled SD-WAN network over hybrid MPLS VPN and public internet underlay networks, 
+	all edge nodes and RRs are already connected by private secure paths. The RRs have the policies 
+	to manage the authentication of all peer nodes. More importantly, when an edge node needs to 
+	establish multiple IPsec tunnels to many edge nodes, all the management information can 
+	be multiplexed into the secure management tunnel between RR and the edge node operating as a BGP peer.   
+	Therefore, the amount of authentication in a BGP-Controlled SD-WAN network can be significantly reduced.
+	</t> 
+	<t>Client VPNs are configured via VRFs, just like the configuration of the existing MPLS VPN. 
+	The IPsec equivalent traffic selectors for local and remote routes are achieved by 
+	importing/exporting VPN Route Targets. The binding of client routes to IPsec SA is dictated by policies. 
+	As a result, the IPsec configuration for a BGP controlled SD-WAN (with mixed MPLS VPN) can be simplified
+	in the following manner:</t>
+	<t>
+	<list style="symbol">
+	<t>The SD-WAN controller has the authority to authenticate edges and peers 
+	so the Remote Peer association is controlled by the SD-WAN Controller (RR).  </t>
+	<t>The IKEv2 proposals (including the IPsec Transform set) 
+	   can be sent directly to peers, or incorporated in a BGP UPDATE. </t>		
+	<t>The BGP UPDATE announces the client route reachability through 
+	   the SDWAN hybrid tunnels.  A SDWAN hybrid tunnnel combines several 
+	   other tunnels into a single logical tunnel.  The SD-WAN Hybrid
+       tunnel implementations insure that all tunnels within are 
+       either running over secure network links or secured by IPsec. 	   
+    </t>
+	<t>Importing/exporting Route Targets under each client VPN (VRF) achieves the traffic selection 
+	(or permission) among clients' routes attached to multiple edge nodes.</t>
+	</list>
+	</t>
+	<t>Note that with this method there is no need to run multiple routing protocols in each IPsec tunnel.
+	</t>	
+	</section>
+	<section title="Client Routes and SDWAN UPDATE">
+	<t>There are two different sequences of BGP UPDATE messages are used for 
+	SD-WAN Edge Discovery.  The first associates Client routes BGP Updates with the SD-WAN Hybrid Tunnel. 
+    The second passes information regarding the SD-WAN Underlay between
+    Egress routers and Ingress routers.  
+	</t>
+    <section title="Client Routes">
+	<t>This section describes how client routes in BGP Updates are associated with the SD-WAN Hybrid Tunnel. 
+	</t>
+	<t>
+	<list style="hanging">
+	<t hangText="Client routes BGP UPDATE:">
+	<list> 
+	<t></t>
+    <t>This BGP UPDATE message contains the client routes (NLRI), Next Hop, and the attributes which 
+	identify the Hybrid SD-WAN tunnel toward the Next Hop. The SD-WAN-Hybrid Tunnel BGP attributes 
+	are either passed as either: 
+	<list style="symbols">
+ 	<t>Encapsulation Extended Community [Encap-EC] which identifies the SD-WAN-hybrid tunnel with
+	   a Tunnel Egress End Point as NextHop in BGP Update [per RFC9012], </t> 
+	<t>Tunnel Encapsulation Attribute (TEA) which identifies the SD-WAN-Hybrid tunnel and 
+	   uses the Tunnel Egress Endpoint SubTLV to identify the egress endpoint (see [RFC9012] section 3.1) </t> 
+	</list>
+	</t>
+    <t>Ordering: If both the TEA and the Extended Community for tunnel information exists, the 
+    Extended Community is preferred (i.e. takes precedence.)
+	</t>
+    </list>	
+	</t> 
+	<t hangText="Sample Topology:">For a Hybrid SD-WAN Tunnel
+	<figure
+       anchor="Hybrid SD-WAN"
+       title="Hybrid SD-WAN">
+       <artwork><![CDATA[ 
+	  
+	  
+	    Site 15.0.0.2
+                                  +---+
+                   +--------------|RR |----------+
+                  /  Untrusted    +-+-+           \
+                 /                                 \
+                /                                   \
+        +---------+  MPLS Path                      +-------+   
+11.1.1.x| C-PE1   A1-------------------------------B1 C-PE2 |10.1.1.x
+        |         |                                 |       |
+21.1.1.x|         A2(192.10.0.10)------( 192.0.0.1)B2       |20.1.1.x  
+        |         |                                 |       |
+        | Addr    A3(160.0.0.1) --------(170.0.0.1)B3 Addr  |   
+        | 1.1.1.1 |                                 |2.2.2.2|
+        +---------+                                 +-------+ 
+]]></artwork>
+	</figure> 
+	</t>
+	<t hangText="Example Client Routes:">
+	In figure 1, four overlay paths between C-PE1 and C-PE2 are established 
+	for illustration purpose. More overlay paths are possible. One physical port on C-PE2 can 
+	terminate multiple overlay paths from different ports on C-PE1. 
+	<list style="hanging">
+	<t hangText="a)">MPLS-in-GRE path;</t>
+	<t hangText="b)">node-based IPsec tunnel [2.2.2.2 - 1.1.1.1]. 
+	As C-PE2 has two public internet facing WAN ports, either of those two WAN port IP addresses 
+	can be the outer destination address of the IPsec encapsulated data packets; </t>
+	<t hangText="c)">port-based IPsec tunnel [192.0.0.1 - 192.10.0.10]; and</t>
+	<t hangText="d)">port-based IPsec tunnel [172.0.0.1 - 160.0.0.1]. </t>
+	</list>
+	</t>
+	<t hangText="C-PE2 advertises the attached client routes"> in one of two forms below:
+	<list>
+	<t>Client Route UPDATE - [RFC9012] "Barebones"  (option 1) 
+    <figure
+       anchor="Client-Routes-1"
+       title="Client Routes Update Message ">
+       <artwork><![CDATA[ 
+   NLRIs: AFI=IPv4 (1) and SAFI = VPN (128) 
+     Prefix: 10.1.1.x; 20.1.1.x 
+     NextHop: 2.2.2.2 (C-PE2) 
+   Attributes: 
+     Extended community RT: (RT-EC) for SD-WAN VPN 1 
+     Encapsulation Extended Community (Encaps-EC) 
+	   tunnel-type=SD-WAN-Hybrid
+	]]></artwork>
+	</figure> 
+	</t> 
+	<t>Client Route UPDATE [RFC9012] Tunnel Encaps Attribute (TEA) (option 2) 
+   <figure
+       anchor="Client-Routes-2"
+       title="Client Routes Update Message ">
+       <artwork><![CDATA[ 
+   NLRIs: AFI=IPv4 (1) and SAFI = VPN (128) 
+     Prefix: 10.1.1.x; 20.1.1.x 
+	 NextHop: 2.2.2.2 (C-PE2) 
+   Attributes: 
+     Extended community RT: (RT-EC) for SD-WAN VPN 1 
+     Tunnel Encapsulation Attribute (TEA) 
+       Tunnel Egress Endpoint SubTLV: 2.2.2.2 (C-PE2)		 
+	]]></artwork>
+	</figure> 
+	</t> 
+    </list>
+	</t>
+	</list>
+	</t>
+	</section> 
+	<section title="SD-WAN Underlay UPDATE">
+	<t>Edges nodes use this BGP UPDATE to advertise the properties of directly 
+	attached underlay networks and IPsec SA attributes associated with an SD-WAN-Hybrid tunnel.  
+	The properties of underlay networks include encapsulation, NAT and underlay physical properties.
+	The IPsec SA attributes passed include keys, nonce, and encryption algorithms, and other IP SEC attributes.  
+	</t>  
+	<t>The security attributes are likely to change more rapidly than the physical
+	attributes of links within the Hybrid SD-Wan Tunnel. Typically the attributes of the 
+	links are passed during initial set-up of Hybrid SD-WAN tunnels in the network. 
+	</t> 
+    <t> Given the topology in figure 1, C-PE2 can send the SD-WAN NLRI in a BGP Update messages 
+	to advertise the properties of Internet facing ports 192.0.0.1 and 170.0.0.1, 
+	and their associated IPsec SA related parameters.
+	</t> 
+	<t> Example 1 below provides sample BGP Updates per port. This type of UPDATE packing 
+    provides poor packing of UPDATES, but it may occur. 
+	Example 2 provides a single BGP Update which passes the initial 
+	information in one update.  In the update, Color-EC is Color Extended Community
+	[RFC4360]. 
+	</t> 
+    <section title="Example #1 SD-WAN Underlay Update Messages Used in Set-Up">
+    <t>Example #1 - BGP Updates per Port 
+	 <figure
+       anchor="SDWAN-RT-1"
+       title="SDWAN NLRI Update per Port">
+     <artwork><![CDATA[ 
+	 
+# Update #1 for Port B2 on C-PE2 
+  SD-WAN NLRI (AFI=1/SAFI=SD-WAN) 
+    Port-id = Local port ID for WAN Port 192.0.0.1 
+    SD-WAN Color = Match to Color-EC of Client routes 
+    SD-WAN Node ID = 2.2.2.2 (C-PE2) 
+  Tunnel Encaps Attribute (TEA) 
+    Tunnel TLV: (type: Hybrid-SD-WAN)  
+      Tunnel Egress Endpoint SubTLV: 2.2.2.2
+      Extended-Port Attribute SubTLV: Port B2 (192.0.0.1)
+      IPsec SA Identifier SubTLV:  SA-1, SA-2 	
+		
+# Update #2 for Port B3 (IPsec) in Hybrid tunnel on PE2 
+  SD-WAN NLRI (AFI=1/SAFI=SD-WAN) 
+    Port-id = Local port ID for WAN Port 170.0.0.1 
+    SD-WAN Color = Match to Color-EC of Client Routes 
+    SD-WAN Node ID = 2.2.2.2 (C-PE2) 
+  Tunnel Encaps Attribute (TEA)
+    Tunnel TLV: (type: SD-Wan-Hybrid) 
+      Tunnel Egress Endpoint SubTLV (SubTLV=6) = 2.2.2.2
+	  Extended Port Attribute SubTLV: Port B3 (170.0.0.1) 
+	  Simplified IPSec SD-WAN SubTLV: SA-3, SA-4 
+ 
+See section 7.1 for Extended Port Attribute SubTLV definition. 
+See section 8.1 for IPsec SA Identifier SubTLV. 
+See section 8.5 for Simplified IPsec SD-WAN SubTlv.  	 		 
+		]]></artwork>
+	</figure> 
+	</t> 	
+ </section> 
+ <section title="Example #2 IPsec terminated at Node with Hybrid Tunnel">
+<t>Example #2 - IP Sec Terminated at Node C-PE2 
+	 <figure
+       anchor="SDWAN-RT-2"
+       title="SDWAN NLRI Update 3 ports">
+        <artwork><![CDATA[ 
+
+# Ports B1 (MPLS), B2 (IPsec), B3 (IPsec) 
+# Update for C-PE2 (IPSec)  
+  SD-WAN NLRI (AFI=1 / SAFI = SD-WAN) 
+    SD-WAN Color = Match to Color-EC of Client routes
+	Port ID = 0  
+	SD-WAN Node ID = 2.2.2.2
+  Tunnel Encaps Attribute (TEA)   
+	Tunnel TLV (type: SD-Wan-Hybrid)  
+      Egress Endpoint = 2.2.2.2
+      IPsec-SA-ID: SA-1, SA-2, SA-3, SA-4 
+	]]></artwork>
+	</figure> 
+	</t> 	
+	</section>
+	</section> 
+	</section> 
+	<section title="Edge Node Discovery ">
+	<t>The basic scheme of SD-WAN edge node discovery using BGP consists of the following:
+	<list style="symbol">
+		<t>Secure connection to a SD-WAN controller (BGP RR in this context):
+		<list> 
+		<t>For an SD-WAN edge with both MPLS and IPsec paths, the edge node should already have a secure connection to 
+		its controller (RR in this context). For an SD-WAN edge that is only accessible via Internet, 
+		the SD-WAN edge upon power-up establishes a secure tunnel (such as TLS or SSL) 
+		with the SD-WAN central controller whose address is preconfigured on the edge node. 
+		The central controller informs the edge node of its local RR. The edge node then establishes a 
+		transport layer secure session with the RR (such as TLS or SSL).</t>
+		</list>
+		</t>
+		<t>The BGP Peer Edge node will advertise the properties of its Hybrid SD-WAN Tunnel
+    		to its designated RR via the secure connection.</t>
+		<t>The RR propagates the received information to the authorized BGP peers. </t>
+		<t>The authorized BGP peers can establish the secure data channels via Hybrid SD-WAN tunnel 
+		and exchange more information among each other. </t>
+	</list>
+	</t>
+	<t>For an SD-WAN deployment with multiple RRs, it is assumed that there are secure connections among those RRs. 
+	How secure connections are established among those RRs is out of the scope of this document. 
+	The existing BGP UPDATE propagation mechanisms control the edge properties propagation among the RRs.</t>
+	<t>For some environments where the communication to RR is highly secured, [RFC9016] 
+	IKE-less can be deployed to simplify IPsec SA establishment among edge nodes.</t>
+	</section>
+	</section>
+<section title="Constrained propagation of BGP UPDATE ">
+<section title="SD-WAN Segmentation, Virtual Topology and Client VPN">
+	<t>In SD-WAN deployment, SD-WAN Segmentation is a frequently used term which refers to partitioning a 
+	network into multiple subnetworks, just like MPLS VPNs. SD-WAN Segmentation is achieved by creating 
+	SD-WAN virtual topologies and SD-WAN VPNs. An SD-WAN virtual topology consists of a set of edge nodes 
+	and the tunnels (a.k.a. underlay paths) interconnecting those edge nodes. These tunnels forming the 
+	underlay paths can be IPsec tunnels, or MPLS VPN tunnels, or other tunnels. 
+	</t> 
+	<t>An SD-WAN VPN is configured in the same way as the VRFs of an MPLS VPN. One SD-WAN client VPN 
+	can be mapped to multiple SD-WAN virtual topologies. SD-WAN Controller governs the policies of mapping
+	a client VPN to SD-WAN virtual topologies.</t>
+	<t>Each SD-WAN edge node may need to support multiple VPNs. Route Target is used to differentiate the
+	SD-WAN VPNs. For example, in the picture below, the Payment-Flow on C-PE2 is only mapped to the virtual 
+	topology of C-PEs to/from Payment Gateway, whereas other flows can be mapped to a multipoint-to-multipoint
+	virtual topology.</t>
+	<t>
+	<figure
+       anchor="SD-WAN Virtual Topology and VPN"
+       title="SD-WAN Virtual Topology and VPN">
+       <artwork><![CDATA[ 
+                                  +---+
+                   +--------------|RR |----------+
+                  /  Untrusted    +-+-+           \
+                 /                                 \
+                /                                   \
+        +---------+  MPLS Path                      +-------+   
+11.1.1.x| C-PE1   A1-------------------------------B1 C-PE2 |10.1.1.x
+        |         |                                 |       |
+21.1.1.x|         A2(192.10.0.10)------( 192.0.0.1)B2       |20.1.1.x  
+        |         |                                 |       |
+        | Addr    A3(160.0.0.1) --------(170.0.0.1)B3 Addr  |11.2.2.x   
+        | 1.1.1.1 |                              /  |2.2.2.2|
+        +---------+                             /   +-------+ 
+                   \                           /
+                    \                         /PaymentFlow
+                     \                       /
+                      \                +----+----+ 
+                       +---------------| payment |				
+                                       | Gateway |
+                                       +---------+
+]]></artwork>
+	</figure>
+    </t>	
+</section>
+<section title="Constrained Propagation of Edge Capability">
+	<t>	BGP Route Reflectors [RFC4456] may be configured to constrain the 
+	distribution of BGP informtion to specific BGP clients.  
+    </t>
+	<t>
+	<figure
+       anchor="Constraint propagation of Edge Property"
+       title="Constraint propagation of Edge Property">
+       <artwork><![CDATA[ 
+       NLRI={SD-WAN#1, SD-WAN#2}       NLRI={SD-WAN#1, SD-WAN#3}
+            ----->                 +---+      <-----------
+              +--------------------|RR1|------------------+
+              | Outbound Filter    +---+  Outbound Filter |
+              | Permit SD-WAN#1,#2      Permit SD-WAN#1,#3|
+              |   <-------                --------->      |
+              |                                           |
+        +-----+---+  MPLS Path                      +-----+-+   
+11.1.1.x| C-PE1   A1-------------------------------B1 C-PE2 |10.1.1.x
+        |         |                                 |       |
+21.1.1.x|         A2(192.10.0.10)------( 192.0.0.1)B2       |20.1.1.x  
+        |         |                                 |       |
+        | Addr    A3(160.0.0.1) --------(170.0.0.1)B3 Addr  |   
+        | 1.1.1.1 |                                 |2.2.2.2|
+        +---------+                                 +-------+  
+SD-WAN VPN #1                                          SD-WAN VPN #1
+SD-WAN VPN #2                                          SD-WAN VPN #3
+]]></artwork>
+	</figure> 
+	</t>
+	<t>The RR is configured to speak to the BGP clients (CE-PE1 and CE-PE2) 
+	over secure virtual links (IPsec), and send only certain routes.  
+    The configuration on the RR and the BGP Peers sending SD-WAN routes forms 
+    a "walled garden" for the SD-WAN information. </t> 
+	<t>It is out of the scope of this document on how RR is configured with the policies to 
+	filter out unauthorized nodes for specific SD-WAN VPNs.</t> 
+</section>
+</section>
+<section title="Client Route UPDATE Procedures">
+<t>The Tunnel Encapsulation Attribute for the SD-WAN Hybrid Tunnel Type 
+ may be associated with BGP UPDATE messages with NLRI with AFI/SAFI  
+IPv4 Unicast (1/1),  IPv4 with MPLS labels (1/4), IPVPN-IPv4 Label Unicast (1/128), 
+IPv6 Unicast (2/1), IPv6 with MPLS labels (2/4),  VPN-IPv6 Label Unicast (2/128),
+and EVPN (25/70). 
+</t> 
+<t>
+When associated with any NLRI in this set, these routes
+are described as "Client Routes" in this document. 
+Based on [RFC9012], there are two forms a Tunnel Encapsulation 
+Attribute (TEA) can take: "Barebones" using the Encapsulation 
+Extended Community (Encaps-EC) and a normal Tunnel Encapsulation form. 
+</t> 
+<section title="Tunnel Form 1: Encapsulation Extended Community (Encaps-EC) ">  
+<t>
+The SD-WAN Client Route UPDATE message uses the Encapsulation 
+Extended Community (Encap-EC) to identify 
+the Hybrid SD-WAN tunnel and the Tunnel Egress Endpoint. 
+Per [RFC9012], the Encapsulation Extended 
+Community uses the NextHop Field in the BGP UPDATE as
+the Tunnel Egress EndPoint. The validation for 
+the Tunnel Egress Endpoint uses the validation 
+in section 6, 8, and 13 applied to the NextHop.   
+</t>
+<t>
+A Color Extended Community (Color-EC) or local policy applied to the 
+client route directs the traffic for the client route 
+to across appropriate interface within the Hybrid SD-WAN Tunnel
+to the Tunnel Egress Endpoint.   
+</t>
+</section> 
+<section title="Tunnel Form 2: Tunnel Encapsulation Path Attribute (TEA) ">
+<t> The Client route with the Tunnel Encapsulation Path 
+Attribute (TEA) with the Hybrid SD-WAN route TLV 
+must have the Tunnel Egress Endpoint
+(SubTLV=6) and any of the SubTLVs found in [RFC9012]. 
+The validation for the Tunnel Egress Endpoint uses the validation 
+in section 6, 8, and 13 from [RFC9012].     
+</t> 
+</section> 
+<section title=" Multiple tunnels attached to One Route"> 
+<t>A single SD-WAN client route may be attached to multiple SD-WAN Hybrid tunnels. 
+An Update with an SD-WAN client route may express these tunnels as 
+an Encap-EC or a TEA. Each of these tunnel descriptions is treated as a 
+unique Hybrid SD-WAN tunnel with a unique Egress Endpoint. 
+Local Policy on the BGP Peer determines which tunnel the client data traffic will use. 
+</t>
+</section> 
+ <section title="SD-WAN VPN ID in Client Route Update">  
+ <t>An SD-WAN VPN ID is same as a client VPN in a BGP controlled SD-WAN network. 
+ The Route Target Extended Community should be included in a Client Route UPDATE message to 
+ differentiate the client routes from routes belonging to other VPNs.
+  Route Target value is taken as the VPN ID (for 1/1 and 2/1).  
+ For 1/128 and 2/128, the RD from the NLRI identifies the VPN ID. 
+ For EVPN, picking up the VPN-ID from EVPN SAFI. 
+ </t> 
+ </section>
+  <section title="SD-WAN VPN ID in Data Plane">  
+  <t>SD-WAN edge node which can be reached by either 
+    an MPLS path or an IPsec path within the hybrid SD-WAN tunnel. 
+   If client packets are sent via a secure MPLS network 
+	within the Hybrid SD-WAN tunnel, then the data packets 
+	will have MPLS headers with the MPLS Labels based on the scheme specified 
+	by [RFC8277]. It is assumed the secure MPLS network assures
+	the security outer MPLS Label header.
+	</t>
+   <t>If the packets are sent via a link with IPsec outer encryption 
+      across a public network, the payload is still encrypted with 
+	  GRE or VXLAN encryption. For GRE Encapsulation within an IPsec tunnel, 
+	the GRE key field can be used to carry the SD-WAN VPN ID. 
+	For network virtual overlay (VxLAN, GENEVE, etc.) encapsulation 
+	within the IPsec tunnel, the Virtual Network Identifier (VNI) field is 
+	used to carry the SD-WAN VPN ID.
+</t>
+ </section>
+ </section>
+ <section title="SD-WAN Underlay UPDATE">
+ <t>The hybrid SD-WAN underlay tunnel UPDATE is to advertise the detailed properties associated with the 
+ public facing WAN ports and IPsec tunnels. The Edge BGP Peer will advertise the SD-WAN properties to 
+ its designated RR via the secure connection.  The BGP Update message will contain 
+ the SD-WAN Underlay NLRI and a Tunnel Encapsulation Attribute (TEA) with SubTLVs for Extended Port attribute
+ (see section 7) or IP Sec information (see section 8). The IPsec information subTLVs include: 
+ IPsec-SA-ID, IPsec SA Nonce, IPsec Public Key, IPsec SA Proposal, and Simplified IPsec SA.  
+ IP</t>
+<section title="NLRI for SD-WAN Underlay Tunnel Update">
+<t>A new NLRI SAFI (SD-WAN SAFI=74) is introduced within the MP_REACH_NLRI Path 
+	Attribute of [RFC4760] for advertising the detailed properties of the SD-WAN tunnels 
+	terminated at the edge node:</t>
+<t>
+ <figure  anchor="SD-WAN NLRI"  title="SD-WAN NLRI">
+        <artwork><![CDATA[  
++------------------+
+|    Route Type    | 2 octet
++------------------+  
+|     Length       | 2 Octet
++------------------+   
+|   Type Specific  |  
+~ Value (Variable) ~  
+|                  |  
++------------------+
+]]></artwork>
+</figure>
+</t>
+<t>Where</t>
+<t>
+	<list style="hanging">
+	<t hangText="Route (NLRI) Type:"> 2 octet value to define the encoding of the rest of the SD-WAN the NLRI.
+	</t>
+	<t hangText="Length:">2 octets of length expressed in bits as defined in [RFC4760].</t>
+	</list>
+</t>
+<t></t>
+<t>This document defines the following SD-WAN Route type:</t>
+     <t>
+	<list style="hanging">
+	 <t hangText="NLRI Route-Type = 1:"> For advertising the detailed properties of the SD-WAN 
+	 tunnels terminated at the edge, where the transport network port can be uniquely identified by a 
+	 tuple of three values (Port-Local-ID, SD-WAN-Color, SD-WAN-Node-ID). 
+	 The SD-WAN NLRI Route-Type =1 has the following encoding:
+	<figure anchor="SD-WAN NLRI Route Type 1" title="SD-WAN NLRI Route Type 1">
+           <artwork><![CDATA[  
+     +------------------+
+     |  Route Type = 1  | 2 octet
+     +------------------+
+     |     Length       | 2 Octet
+     +------------------+
+     |   Port-Local-ID  | 4 octets
+     +------------------+
+     |   SD-WAN-Color   | 4 octets
+     +------------------+
+     |  SD-WAN-Node-ID  | 4 or 16 octets
+     +------------------+
+		]]></artwork>
+	</figure>
+	</t>
+	<t hangText="Port-local-ID:"> SD-WAN edge node Port identifier, which is locally significant. 
+		If the SD-WAN NLRI applies to multiple WAN ports, this field is zero.</t>
+	<t hangText="SD-WAN-Color:"> represents a group of tunnels, which correlate 
+		with the Color-Extended-community included in the client routes UPDATE. 
+		When a client route can be reached by multiple SD-WAN edges co-located at one site, 
+		the SD-WAN-Color can represent a group of tunnels terminated at those SD-WAN edges co-located at the site.
+        If an SD-WAN-Color represents all the tunnels at a site, then the SD-WAN-Color effectively represents the site.</t>
+	<t hangText="SD-WAN Node ID:"> The node's IPv4 or IPv6 address.</t>
+	</list>
+	</t>
+	<t> Route Type values outside of 1 are out of scope for this document. 	 
+	</t>
+ </section>
+ <section title="SD-WAN-Hybrid Tunnel Encoding">
+<t> A new BGP Tunnel-Type SD-WAN-Hybrid (code point 25) indicates hybrid underlay tunnels.</t>
+<t>
+ <figure
+           anchor="SD-WAN Hybrid Value Field"
+           title="SD-WAN Hybrid Value Field">
+           <artwork><![CDATA[  
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Tunnel-Type=25(SD-WAN-Hybrid )| Length (2 Octets)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                           Sub-TLVs                            |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+		]]></artwork>
+ </figure>
+</t>
+<t>The valid SubTLVs for the Hybrid Tunnel type include subTLVs 
+specified in [RFC9012] and the following SubTLVs specified in 
+this document: 
+<list style="symbols">
+<t> Extended Port Attributes SubTLV
+</t>
+<t>IPsec SA-ID SubTLV
+</t>
+<t> IPSec SA Rekey SubTLV
+</t>
+<t> IPsec Public Key SubTLV
+</t>
+<t>IPsec SA Proposal SubTLV
+</t> 
+<t>Simplified IPsec SA SubTLV
+</t> 
+</list>
+</t>
+<t>The Extended Port Attributes are described in section 7, and 
+the IPsec related SubTLVs are described in section 8.  
+</t>
+</section> 
+</section> 
+
+ <section title="Extended Port Attribute Sub-TLV">
+ <t> The SD-WAN Underlay NLRI is sent with a Tunnel Encapsulation Attribute with the 
+  Extended Port Attribute Sub-TLV advertises the properties associated with a public Internet-facing WAN 
+  port that might be behind NAT. An SD-WAN edge node can query a STUN Server (Session Traversal of UDP 
+  through Network address translation [RFC8489]) to get the NAT properties, including the public IP address and the 
+  Public Port number, to pass to its peers.</t>
+  <t>The location of a NAT device can be:
+  	<list style="symbol">
+		<t>Only the initiator is behind a NAT device. Multiple initiators can be behind separate NAT devices. 
+		Initiators can also connect to the responder through multiple NAT devices.</t>
+		<t>Only the responder is behind a NAT device.</t>
+		<t>Both the initiator and the responder are behind a NAT device.</t>
+	</list>
+  </t>
+ <t>The initiator's address and/or responder's address can be dynamically assigned 
+  by an ISP or when their connection crosses a dynamic NAT device that allocates 
+  addresses from a dynamic address pool.</t> 
+ <t>As one SD-WAN edge can connect to multiple peers, the pair-wise NAT exchange as IPsec's 
+ IKE[RFC7296] is not efficient. In the BGP Controlled SD-WAN, NAT properties for a WAN port are 
+ encoded in the Extended Port Attribute sub-TLV, which the following format:</t>
+ <t>
+  <figure
+    anchor="Extended Port Attribute  Sub-TLV"
+    title="Extended Port Attribute  Sub-TLV">
+     <artwork><![CDATA[  
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type=65(extPort| ExtPort Length| Reserved      |I|O|R|R|R|R|R|R|
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | NAT Type      |  Encap-Type   |Trans networkID|     RD ID     |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                  Local  IP Address                            | 
+            32-bits for IPv4, 128-bits for Ipv6
+                    ~~~~~~~~~~~~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                  Local  Port                                  |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                Public IP                                      | 
+            32-bits for IPv4, 128-bits for Ipv6
+                    ~~~~~~~~~~~~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                Public Port                                    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+    |               Extended SubSub-TLV                             | 
+    ~                                                               ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		]]></artwork>
+	</figure>
+	</t>
+	<t>Where:
+	<list style="symbol">
+		<t>Extended Port Attribute Type (=65): indicating it is the Extended Port Attribute SubTLV</t>
+		<t>ExtPort Length: the length of the subTLV in octets (variable).  </t>
+		<t>Flags:
+			<list style="symbol">
+			<t>I bit (CPE port address or Inner address scheme):
+			    <list> 
+				<t>If set to 0, indicate the inner (private) address is IPv4.</t> 
+				<t>If set to 1, indicates the inner address is IPv6. </t>
+				</list>
+			</t>
+			<t>O bit (Outer address scheme):
+			    <list>
+				<t>If set to 0, indicate the inner (private) address is IPv4.</t> 
+				<t>If set to 1, indicates the inner address is IPv6. </t>
+				</list>
+			</t>
+			<t>R bits: reserved for future use. Must be set to 0, and ignored upon reception.</t>
+			</list>
+		</t>
+		<t>NAT Type: the NAT type can be one of the following values: 
+		<list style="symbols"> 
+		<t>1: without NAT ;  </t>
+		<t>2: 1-to-1 static NAT; </t>
+		<t>3: Full Cone; </t> 
+		<t>4: Restricted Cone; </t>
+		<t>5: Port Restricted Cone; </t>
+ 		<t>6: Symmetric; or </t> 
+		<t>7: Unknown (i.e. no response from the STUN server).</t>
+		</list>
+		NAT type values outside of 1-7 are invalid for this SubTLV.  
+		</t>
+		<t>Encap-Type: the supported encapsulation types for the port. 
+		<list>
+		<t>Encap-Type=1: GRE;</t>
+		<t>Encap-Type=2: VxLAN;</t> 
+		</list>
+		Notes: 	
+		<list>
+	     <t>The Encap-Type inside the Extended Port Attribute Sub-TLV is different from the RFC9012's 
+		 BGP-Tunnel-Encapsulation type. The port can indicate the specific encapsulations, such as:
+		 <list style="symbols"> 
+		  <t>If the IPsec-SA-ID subTLV or the IPsec SA detailed subTLVs (Nonce/publicKey/Proposal) 
+		     are included in the SD-WAN-Hybrid tunnel, the Encap-Type indicates the 
+		     encapsulation type within the IPsec payload.</t>
+		  <t>If the IPsec SA subTLVs are not included in the SD-WAN-Hybrid Tunnel, 
+		     the Encap-Type indicates the encapsulation of the payload without IPsec encryption.</t> 
+		  </list> 
+		</t>
+		<t>Encapsulation types outside of GRE and VxLAN are outside of the scope of this specification. 
+		</t>
+		</list>
+		</t> 
+		<t>Transport Network ID: Central Controller assigns a global unique ID to each transport network.
+		Any value in this octet is valid  </t>
+		<t>RD ID: Routing Domain ID, need to be globally unique. Any value in this octet is valid. 
+		<list>
+		<t>Some SD-WAN deployment might have multiple levels, zones, or regions that are represented as logical 
+		domains. Policies can govern if tunnels can be established across domains.  For example, a hub node 
+		can establish tunnels with different logical domains but the spoke nodes cannot establish 
+		tunnels with nodes in different domains.</t>
+		</list>
+		</t>
+		<t>Local IP: The local (or private) IP address of the WAN port.</t>
+		<t>Local Port: used by Remote SD-WAN edge node for establishing IPsec to this specific port.</t>
+		<t>Public IP: The IP address after the NAT. If NAT is not used, this field is set to all-zeros</t>
+		<t>Public Port: The Port after the NAT. If NAT is not used, this field is set to all-zeros.</t>
+		<t>Extended SubSub-TLV: for carrying additional information about the underlay networks.</t> 
+	</list>
+	</t>
+  <section title="Extended SubSub-TLV">
+  <t>One Extended SubSub-TLVs is specified in this document: Underlay Network Transport SubSub-TLV 
+  </t>
+    <section title="Underlay Network Transport SubSub-TLV">
+	<t>The Underlay Network Transport SubSub-TLV is an optional Sub-TLV to 
+	carry the WAN port connection types and bandwidth, such as LTE, DSL, Ethernet, etc.</t>
+	<t>The format of this Sub-TLV is as follows:
+	<figure
+    anchor="Underlay Network SubSub-TLV"
+    title="Underlay Network SubSub-TLV">
+     <artwork><![CDATA[  
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | UnderlayType  |      Length   |      Reserved                 | 
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Connection Type|   Port Type   |        Port Speed             |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		]]></artwork>
+	</figure>
+	</t>
+<t>Where:
+<list style="hanging">
+	  <t hangText="Underlay Network Properties:"> sub Type=66 </t>
+      <t hangText="Length:"> always 6 bytes</t>
+      <t hangText="Reserved:"> 2 octet of reserved bits. It SHOULD be set to zero on
+       transmission and MUST be ignored on receipt.</t>
+	  <t hangText="Connection Type:"> are listed below as:
+			<list style="symbol">
+			<t>1 = Wired</t>
+			<t>2 = WIFI</t>
+			<t>3 = LTE </t>
+			<t>4 = 5G </t>
+			<t>Any value outside of 1-4 is outside the scope of this specification. </t>
+		    </list>
+	  </t>
+	  <t hangText="Port Type:">Port type define as follows: 
+			<list style="symbol">
+			<t>1 = Ethernet </t>
+			<t>2 = Fiber Cable </t>
+			<t>3 = Coax Cable </t>
+			<t>4 = Cellular </t>
+			<t>Any value outside of values 1-4 are outside the scope of this specification.</t> 
+			</list>
+	  </t>
+	 <t hangText="Port Speed:">The port seed is defined as 2 octet value. The values are defined as Gigabit speed.
+	  For example, a value of 1 would mean 1 gigabit. The port speed of "0" is not valid.</t>
+</list>
+The connection types of equipment and port types will continue to grow with technology change. 
+Future specifications may specify additional connection types or port types. 
+</t>
+</section> 
+ </section> 
+ </section>
+ <section title="IPsec SA Property Sub-TLVs"> 
+ <t> This section describes the SubTLVs that pass data regarding IPsec parameters for 
+ the Hybrid SD-WAN tunnel.  During set-up of the Hybrid SD-WAN tunnels, the IPsec 
+ parameters need to be securely passed to set-up secure association. For hybrid SD-WAN tunnels, 
+ the IPsec security association for IPsec links may change to different 
+ security associations over time. 
+</t>
+<t>The IPSec subTLVs supported by the Hybrid Tunnel type are: IPSec-SA-ID, IPsec SA Nounce, 
+ IPsec Public Key, IPsec Proposal, and Simplified IPSec SA. The IPSec-SA-ID SubTLV provides 
+ a way to indicate the IPsec SA Identifiers (section 8.1) for pre-configured security association.    
+ The other four SubTLVs provide different ways to pass details regarding IPsec security associations.  
+ The IPsec SA Nounce passes Nounce and rekey counters for a Secure Association identified by IPsec SA Identifier
+ (see section 8.2). The IPSec Public Key SubTLV passes IPsec Public Key data with a time duration
+ (see section 8.3).  The IPsec Proposal SubTLV provides Transform attributes and Transform IDs (see section 8.4).
+ The Simplified IP SEC SA passes the information that identifies configuration for 2 keys (see section 8.5). 
+</t>  
+<t>For a quick rotation between security associations, the SDWAN NLRI (port-id, color, node)
+can quickly distribute a switch to a set of new security association using the BGP Update message.  
+ In this case, the BGP UPDATE message would like figure 10</t> 
+<t>
+ 	<figure
+      anchor="SD-WAN-NLRI-IPsec1"
+      title="SD-WAN NLRI IPsec rotation in attack">
+        <artwork><![CDATA[  
+    SDWAN NLRI
+	   Route-type: 1
+	   length: 12 
+	   port-id - 0.0.0.0 
+	   SD-WAN-Color - 0.0.0.1 
+	   node-id - 2.2.2.2 
+    TEA:
+     Tunnel TLV: (type: SD-WAN Hybrid) 
+	   Tunnel Egress Endpoint SubTLV: 2.2.2.2
+	   IPsec-SA-ID SubTLV: 20, 30 	
+]]></artwork>
+</figure>
+</t> 
+ <section title="IPsec-SA-ID Sub-TLV">
+  <t>IPsec-SA-ID Sub-TLV within the Hybrid Underlay Tunnel UPDATE indicates one or more 
+    pre-established IPsec SAs by using their identifiers, instead of listing all the 
+	detailed attributes of the IPsec SAs.</t> 
+  <t>Using an IPsec-SA-ID Sub-TLV not only greatly reduces the size of BGP UPDATE messages, but also allows the 
+  pairwise IPsec rekeying process to be performed independently.</t>
+  <t>The following is the structure of the IPsec-SA-ID sub-TLV 
+  <figure
+    anchor="IPsec-SA-ID Sub-TLV"
+    title="IPsec-SA-ID Sub-TLV">
+     <artwork><![CDATA[  
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Type=64 (IPsec-SA-ID subTLV)   |  Length (2 Octets)            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                      IPsec SA Identifier #1                   |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                      IPsec SA Identifier #2                   |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                                                               |
+~                                                               ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                      IPsec SA Identifier #n                  |      
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   
+		]]></artwork>
+	</figure>
+	</t>
+	<t>where: 	
+	<list>
+	<t> length is the length of the subTLV in octets (must be on 4 octet boundary)
+	</t>
+	<t> The length is followed by a sequence of IPsec SA Identifiers of length 4 octets. 
+	<list style="symbols"> 
+	<t>IPSec SA Identifier #1 - is a 4 octet identifier for a IP Security association. 
+	</t>
+	<t>IPSec SA Identifier #2 - is a 4 octet identifier for a IP Security association. 
+	</t>
+	<t>IPSec SA Identifier #n - is a 4 octet identifier for a IP Security association. 
+	</t>
+	</list>
+	</t>
+	</list> 
+	</t> 
+  </section>
+ <section title="IPsec SA Rekey Counter Sub-TLV"> 
+ <t> The IPsec SA Rekey Counter Sub-TLv provides the rekey counter 
+ for a security association (identified by IPsec SA Identifier). 
+ </t> 
+    <t>The format of this Sub-TLV is as follows:</t>
+	<figure
+    anchor="IPsec SA Rekey Counter Sub-TLV"
+    title="IPsec SA Rekey Counter Sub-TLV">
+     <artwork><![CDATA[  
+        0                   1                   2                   3
+        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |   ID Length   |       Nonce Length            |I|   Flags     |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                             Rekey                             |
+       |                            Counter                            |
+       +---------------------------------------------------------------+
+       |                IPsec SA Identifier                            |
+       +---------------------------------------------------------------+
+       |                                                               |
+       ~                          Nonce Data                           ~
+       |                                                               |
+       +---------------------------------------------------------------+
+		]]></artwork>
+	</figure>
+	<t> where:
+	<list> 
+	<t> ID Length - is a  1 octet value indicating the length of SA-Identifer length.  
+	This length should be 4 octets. 
+	</t> 
+	<t> Nonce length - is a 2 octet value indicate the length in octets of the Nonce Data.
+	</t>
+	<t> Flags: - is 1 octet field with the following form [I-R-R-R-R-R-R] 
+	<list>
+	<t> I - indicates status of initial contact (1 = initial, 0 = follow-on) in the 
+	left most bit. 
+	</t> 
+	<t>R - Reserved bits - which are ignored upon reception and set to zero upon transmission. 
+	</t> 
+	</list> 
+	</t>
+	<t>IPsec SA Identifier (IPSec-SA-ID) - identifies a specific IPsec SAs terminated at the edge.
+     The length is 4 octets.  
+	</t> 
+	<t>Nonce Data - a random or pseudo-random number for preventing replay attacks. Its length is a multiple of 32 bits[RFC7296].
+	</t>
+    </list>
+	</t>
+	<t>Note: 
+	<list style="symbols">
+	<t> The IPsec-SA-ID may also refer to the values carried in the same TEA 
+	in the same Tunnel TLV (type SD-WAN Hybrid) as the IPsec SA Rekey SubTLV
+    in either the IPsec Public Key SubTLV or the IPsec SA Proposal SubTLV.  
+	The IPsec SA Rekey Counter, IPsec Public Key, and IPsec SA Proposal SubTLVs work together to create security associations.  
+	</t> 
+	<t>The IPsec-SA-ID may refer to information in another Tunnel TLV in the 
+	same TEA associated wiht the same BGP UPDATE message as the IPsec SA Rekey Counter sub-TLV.
+	</t> 
+	<t> The IPsec-SA-ID can be used in the IPsec-SA-ID subTLV of a different BGP UPDATE message.
+	</t>
+	</list>
+	</t>
+ </section>
+ <section title="IPsec Public Key Sub-TLV"> 
+<t>The format of this Sub-TLV is as follows:</t>
+	<figure
+    anchor="IPsec SA Public Key Sub-TLV"
+    title="IPsec SA Public Key Sub-TLV">
+     <artwork><![CDATA[  
+        0                   1                   2                   3
+        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |   Diffie-Hellman Group Num    |          Reserved             |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                                                               |
+       ~                       Key Exchange Data                       ~
+       |                                                               |
+       +---------------------------------------------------------------+
+       |                            Duration                           |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		]]></artwork>
+	</figure>
+	<t> where: 
+	<list> 
+	<t> Diffie-Hellman Group Num - is 2 octets long. It identifies the Diffie-Hellman group in the Key Exchange Data was computed. 
+	Diffie-Hellman group numbers are discussed in IKEv2 [RFC7296] Appendix B and [RFC5114]. </t>
+	<t> The Key Exchange data -  is constructed by copying one's Diffie- Hellman public value into the
+	"Key Exchange Data" portion of the payload. The length of the Diffie-Hellman public value is described for
+ 	MOPD groups in [RFC7296] and for ECP groups in [RFC5903].  
+    </t> 	
+	<t> Duration - is a 4-octet value specifying the life span of the Diffie-Hellman key usage. 
+	The units of the life span depends on the Diffie-Hellman group. 
+	</t> 
+	</list> 
+	</t> 
+ </section>
+  <section title="IPsec SA Proposal Sub-TLV"> 
+  <t>The IPsec SA Proposal Sub-TLV is to indicate the number of Transform Sub-TLVs. 
+  </t> 
+  <t>
+  	<figure
+    anchor="IPsec SA Proposal Sub-TLV"
+    title="IPsec SA Proposal Sub-TLV">
+     <artwork><![CDATA[  
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Transform Attr Length      |Transform Type |    Reserved.  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Transform ID              |          Reserved             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                        Transform Attributes                   ~
+|                                                               |
++---------------------------------------------------------------+
+		]]></artwork>
+	</figure>
+	</t>
+	<t> where:
+	<list> 
+	<t> Transform Attr Length is a 2 octet field indicating the length of the Transform Attributes field. 
+	</t>
+	<t> Transform Type is a 1 octet field.  The Transform Type values are taken from
+	is from Section 3.3.2 of [RFC7296] and [IKEV2IANA]. Only the values ENCR, INTEG, and ESN are allowed.
+	</t>
+	<t>Reserved - is a 1 octet field reserved for future use. The Reserved os ignored upon receipt and set to zero upon transmission. 
+    </t> 
+	<t>Transform ID - is a 2 octet identifer for the transform described by the transform attributes. 
+	</t> 
+    <t> Transform Attributes Sub-SubTLV are taken from the section 3.3.5 of RFC7296.</t>
+	</list>
+	</t>
+  </section>
+  <section title="Simplified IPsec SA sub-TLV"> 
+  <t>For a simple SD-WAN network with edge nodes supporting only a few pre-defined encryption 
+  algorithms, a simple IPsec sub-TLV can be used to encode the pre-defined algorithms, as below:
+  </t>
+  <t>
+  	<figure
+    anchor="Simplifed IPsec SA Sub-TLV"
+    title="Siplified IPsec SA Sub-TLV">
+     <artwork><![CDATA[  
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |IPsec-simType  |IPsecSA Length                 | Flag          |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Transform     | Mode          | AH algorithms |ESP algorithms |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |         ReKey Counter (SPI)                                   |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | key1 length   |         Key 1                                 ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+    | key2 length   |         Key 2                                 ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | nonce length  |         Nonce                                 ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |        Duration                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		]]></artwork>
+	</figure>
+  </t>
+  <t>Where:
+  <list style="hanging">
+  <t hangText="IPsec-SimType=70:"> indicate the simplified IPsec SA attributes.</t> 
+  <t hangText="IPsec-SA subTLV Length (2 Byte):">  variable (25 or longer).</t>
+  <t hangText="Flags:"> 1 octet of flags. None are defined at this stage. 
+  Flags SHOULD be set to zero on transmission and MUST be ignored on receipt.</t>
+  <t hangText="Transform (1 Byte):"> 
+	<list style="symbol">
+		<t>Transform = 1 means AH,</t> 
+		<t>Transform = 2 means ESP, or</t> 
+		<t>Transform = 3 means AH+ESP.</t> 
+	</list>
+	All other transform values are outside the scope of this document. 
+  </t>
+	<t hangText="IPsec Mode (1 byte):">
+	<list style="symbol">
+		<t>Mode = 1 indicates that the Tunnel Mode is used.</t>
+		<t>Mode = 2 indicates that the Transport mode is used.</t>
+	</list>
+	All mode values besides 1 and 2 are outside the scope of this document. 
+	</t>
+	<t hangText="AH algorithms (1 byte):"> AH authentication algorithms supported. The values are specified by [IANA-AH]. 
+	Each SD-WAN edge node can support multiple authentication algorithms; send to its peers to negotiate the strongest one.</t> 	
+	<t hangText="ESP algorithms (1 byte):"> the ESP algorithms supported. Its values are specified by [IANA-ESP]. 
+	One SD-WAN edge node can support multiple ESP algorithms and send them to its peers to negotiate the strongest one. 
+	The default algorithm is AES-256.
+	<list>
+	<t>	When a node supports multiple authentication algorithms, the initial UPDATE needs to include the "Transform Sub-TLV"</t> 
+	</list>
+	</t>
+	<t hangText="Rekey Counter (Security Parameter Index)):"> 4 octet which indicates the count for rekeying.</t>
+	<t hangText="key1 length:"> is a 1 octet value indicating the IPsec public key 1 length</t>
+	<t hangText="Public Key 1:"> IPsec public key 1</t>
+	<t hangText="key2 length:">1 octet value indicating the IPsec public key 2 length</t>
+	<t hangText="Public Key 2:"> IPsec public key 2</t>
+	<t hangText="none-length:"> 1 octet value indicating the Nonce key length</t>
+	<t hangText="Nonce:"> IPsec Nonce</t>
+	<t hangText="Duration:"> is a 4 octet value specifying the security association (SA) life span. 
+	</t> 
+  </list>
+  The units on duration are specified by the deployment of the security association. 
+  The operators managing these security association must have common units for Security Asssociation duration. 
+  </t>
+  </section>
+ </section>
+
+ <section title="Error handling">
+ <t>The Error handling for SD-WAN VPN support has two components: 
+ error handling for Tunnel Encapsulation signaling 
+ (Encaps-EC and TEA) and the SD-WAN NLRI. 
+</t>
+<section title="Error handling for the Tunnel Encapsulation Signaling">
+<t> The error handling for the tunnel encapsulation signaling (Encaps-EC and 
+TEA) adheres to the error handling and validation specified by [RFC9012]. 
+</t>
+<t>
+The Tunnel encapsulation signaled with the client routes indicates
+the Egress endpoint via Next Hop in the Encaps-EC or the TEA SubTLV 
+for Tunnel Egress Endpoints.  As indicated in sections 5.1 and 5.2,
+the SD-WAN Hybrid tunnel follows the validation section 6, 8, and 13 from [RFC9012]. 
+</t>
+<t>The SD-WAN client routes associate the same NLRIs that [RFC9012] associates
+with the Encaps-EC and the TEA using the validation specified in [RFC9012] in sections 6, 8, and 13. 
+When the SD-WAN Hybrid Tunnel is associated with the SD-WAN NLRI, and 
+all RFC9012 validation rules in section 6, 8, and 13 are extended to 
+apply to the SD-WAN NLRI. 
+</t> 
+<t> 
+[RFC9012] contains the necessary detail to specify validation for 
+the new SubTLVs present for the SD-WAN Tunnel type.  However, to aid 
+users of this document the following recap of validation 
+of [RFC9012] is provided below. 
+</t>
+<t>
+The validation from section 13 of [RFC9012] includes: 
+<list style="symbols">
+<t> Invalid tunnel type must be treat if the TLV was not present. 
+</t>
+<t>A malformed subTLVs must be treated as an unrecognized subTLV except 
+for Tunnel Egress Endpoint.  If Tunnel Egress Endpoint is malformed, the 
+entire TLV must be ignored. 
+</t> 
+<t>Multiple incidents of Tunnel Egress Endpoint, Encapsulation, DS, UDP Destination Port, 
+Embedded Label Handling, MPLS Label Stack, Prefixes-SID cause the first incident of 
+these subTLVs to be utilized.  Subsequent TLVs after the first one per type are ignored
+(per RFC9012), but propogated.  
+</t> 
+<t>If a subTLV is meaningless for a tunnel type, the 
+subTLV is ignored, but the subTLV is not considered malformed or removed
+from the Tunnel Attribute propagated with the NLRI. 
+</t>
+</list> 
+</t>
+<t>For SD-WAN client routes with a TEA with a SD-WAN Hybrid Tunnel type, 
+the Extended Port subTLV and the IPSec SubTLVs
+(IPsec SA-ID, IPSec nonce, IPSec Public Key, IPsec Proposal, 
+and Simplified IPsec SA) are meaningful, but may be rarely sent. 
+</t>
+<t>For SD-WAN NLRI underlay routes, the the Extended Port subTLV 
+and the IPSec SubTLVs (IPsec SA-ID, IPSec nonce, IPSec Public Key, IPsec Proposal, 
+and Simplified IPsec SA) are valid and meaningful. Incorrect fields within 
+any of these 5 TLVs or subSubTLVs within the TLVs should cause the subTLV
+to be treated as malformed SubTLV.  Per [RFC9012], a malformed subTLV
+is treated as an unrecognized subTLV.  Multiple copies of 
+each SubTLV may be included in a single TLV.
+</t> 
+ </section> 
+ <section title="Error Handling for NLRI">
+ <t>
+The SD-WAN NLRI [AFI 1/SAFI = 74] utilizes a route type field to describe the format of the NLRI. 
+This specification only allows an NLRI with a type value of 1. An NLRI with a type of field of 
+another value is ignored and not processed.  The implementation MAY log an error upon 
+a reception of an type value outside of Route Type 1. Error handling for the SD-WAN NLRI 
+also adheres to the BGP Update error handling specified in [RFC7606].     
+</t>
+<t> Section 6.1 specifies that Route Type 1 has a tuple of (Port-Local-ID, SD-WAN-Color, SD-WAN-Node-ID).
+Port-Local-ID may be zero if the NLRI applies to multiple ports.  The BGP Peer receiving the NLRI 
+must have pre-configured inbound filters to set the preference for the SD-WAN NLRI tuple.
+</t>
+<t>Since a Port-Local-ID value of zero indicates the NLRI applies to multiple ports, it is possible 
+to have the following NLRI within a packet (or received in multiple packets): 
+<list>
+<t> Port-Local-ID (0), SD-WAN-Color (10), SD-WAN-Node-ID (2.2.2.2),
+</t> 
+<t> Port-Local-ID (0), SD-WAN-Color (20), SD-WAN-Node-ID (2.2.2.2), and
+</t>
+<t> Port-Local-ID (0), SD-WAN-Color (30), SD-WAN-Node-ID (2.2.2.2).
+</t>
+</list>
+These NLRI may simply indicate that there are three groups of tunnels 
+for SD-WAN-Node-ID (2.2.2.2) assigned three colors.  For example, 
+these tunnels could represent three types of gold, silver and bronze network service. 
+</t>
+<t>The local policy configuration in the BGP peer receiving this 
+NLRI must determine the validity of the route based on policy. 
+Local configuration and policy must be carefully constrain 
+the SD-WAN-NLRI, tunnels, and IPsec security associations in 
+to create a "walled garden".  
+</t>
+<t>In the future, other proposals for a SD-WAN NLRI may specify a different route type. 
+Those proposals must specify the following:
+<list>
+<t> validation for new Route Type in the SD-WAN-NLRI, and 
+</t>
+<t> how the new Route Type interacts with the Route Type 1.
+</t>
+</list>
+</t>
+ </section> 
+ </section> 
+ <section title="Manageability Considerations"> 
+ <t>Unlike MPLS VPN whose PE nodes are all controlled by the network operators, 
+ SD-WAN edge nodes can be installed anywhere, in shopping malls, in 3rd party Cloud DCs, etc.</t> 
+ <t>It is very important to ensure that client routes advertisement from an SD-WAN edge 
+ node are legitimate. The RR needs to ensure the SD-WAN Hybrid Tunnels and routes 
+run over the appropriate Security associations. </t>   
+ <section title="Detecting Misaligned Tunnels  "> 
+ <t>It is critical that the Hybrid SD-WAN Tunnel have correctly forward traffic
+ based on the local policy on the client routes, the tunnel egress and tunnel 
+ingress, and the security association.  The RR reflector and the BGP peer 
+must check that the client routes, tunnel egress, tunnel ingress, and security 
+associations align with expected values for a tunnel. 
+ </t>
+ </section> 
+ <section title="IPsec Attributes Mismatch"> 
+ <t>Each BGP peer (e.g. a C-PE) advertises a SD-WAN SAFI Underlay NLRI to the other 
+ BGP peers via a BGP Route Reflector to establish pairwise IPsec Security Associations (SA)  
+ between itself and other remote BGP Peers.  During the SD-WAN SAFI NLRI advertisement, 
+ the BGP Peer originating may pass information about security asssociation in one of 
+ three forms: 
+ <list style="symbols">
+<t>an identifier for a pre-configured and established IPsec Security Association,  
+</t>  
+<t>a simplified set of security parameters for setting up a IPsec Security association 
+(Transform, IPsec Mode, AH and ESP Algorithms, rekey counter, 
+2 public keys, nonce, and duration of security association), or 
+</t>
+<t>a flexible set of security parameters where Nonce, Public Key, and SA Proposal 
+are uniquely specified. 
+</t>
+</list>
+</t>
+<t>For existing IPsec Security associations, the receiving BGP peer can simply 
+utilize one of these existing security associations to pass data. 
+If multiple IPsec associations are pre-configured, the local policy 
+on the SD-WAN Edge Node may may help select which security association is chosen
+for the SD-WAN Hybrid Tunnel. 
+</t>
+<t>If the receiving and originating BGP peer engage in a set-up for the 
+IPsec security associations for the link within the SD-WAN Hybrid tunnel,  IPsec
+mechansims require that there are matching IPsec transforms.  Without common 
+IPsec transforms, the IPsec set-up process cannot operate. 
+</t>
+<section title="SD-WAN Hybrid Tunnel Mechanisms for Passing IPSec Security Association Info">
+<t>
+The TEA passes in the Tunnel TLV for the SD-WAN Hybrid Tunnel these three
+sets of information in the following subTLVs: 
+<list style="hanging">
+<t hangText="IPsec-SA-ID:"> passes the previous configured (pre-configured or generated)
+ IPsec SA identifiers. 
+</t>
+<t hangText="Simplified IPsec SA SubTLV:"> specifies a simplified set of information 
+upon which to set-up the IPsec security associations for the tunnel.
+</t> 
+<t hangText="A sequence of the following SubTLVs:"> IPsec SA Rekey Counter SubTLV, IPsec Public Key SubTLV, 
+and a IPSec Proposal SubTLV. Configuration on the local node uses this information 
+and any information in the underlay to create security associations. 
+</t>
+</list>
+</t>
+ <t>The BGP Peer's need to send the IPSec SA attributes received on the SD-WAN NLRI in the 
+TEA between the local and remote WAN ports. 
+If there is a match on the SA Attributes between the two ports, the IPSec Tunnel is established.
+If there is a mismtach on the SA Attributes, no IPsec Tunnel is established. 
+</t>
+ <t>The C-PE devices do not try to negotiate the base IPSec-SA parameters between the local 
+ and the remote ports in the case of simple IPSec SA exchange or the Transform sets between local 
+ and remote ports.  If there is a mismatch in the IPsec SA, then no IPsec Tunnel is created. 
+ If there is a mismatch on the Transform sets in the case of full-set of IPSec SA Sub-TLVs, 
+ no tunnel is created.
+ </t>
+ </section>
+<section title="Example creation of IPsec Security Association over SD-WAN Hybrid tunnel">
+<t>This section provides one example of how IPsec Security associationes are created over 
+the SD-WAN Hybrid tunnel.  Figure 1 in Section 3 shows an establish an IPsec Tunnel being 
+created between C-PE1 and C-PE2 WAN Ports A2 and B2 (A2: 192.10.0.10 - B2:192.0.0.1).</t>
+ <t>To create this tunnel C-PE1 needs to advertise the following attributes for establishing the IPsec SA:</t>
+<t> 
+ <list style="symbols">
+ <t>NextHop: 192.10.0.10</t>
+ <t>SD-WAN Node ID: 1.1.1.1  </t>
+ <t>SD-WAN-Site-ID: 15.0.0.2</t> 
+ <t>Tunnel Encap Attr (Type=SD-WAN) - 
+	<list style="symbols">
+	<t>Extended Port Attribute Sub-TLV containing
+	  <list>
+	   <t>Transport SubSubTLV - with information on ISP3. </t>
+      </list>
+    </t>	
+	<t>IPSec information for detailed information about the ISP3</t>
+	<t>IPsec SA Rekey Counter Sub-TLV,</t> 
+	<t>IPsec SA Public Key Sub-TLV,</t>
+	<t>Proposal Sub-TLV (type = ENCR, transform ID = 1) 
+	  <list>
+	  <t>type: ENCR </t>
+	  <t>Transform ID: 1 </t> 
+	  <t>Tranform attributes = trans 1 [from RFC7296]</t>
+	  </list>
+    </t>
+    </list>
+ </t>
+ </list>
+</t> 
+<t>C-PE2 needs to advertise the following attributes for establishing IPsec SA:
+<list style="hanging">
+<t hangText="Next Hop:"> 192.0.0.1</t>
+<t hangText="SD-WAN Node ID:"> 2.2.2.2 </t>
+<t hangText="SD-WAN-Site-ID:"> 15.0.0.2 </t>
+<t hangText="Tunnel Encap Attr (Type=SD-WAN)">
+	<list style="symbols">
+	<t>Extended Port Attribute SubTLV
+	  <list>
+	  <t>Transport SubSubTLV - with information on ISP3. </t>
+      </list>
+	</t>
+	<t>IPsec SA Rekey Counter Sub-TLV, </t>
+	<t>IPsec SA Public Key Sub-TLV,</t>
+	<t>IPSec Proposal Sub-TLV with 
+  	  <list>
+      <t> transform type: ENCR </t>  
+	  <t> Transform ID = 1 </t>
+	  <t> Transform attributes = trans 2 </t> 
+	  </list>
+	</t> 
+    </list>
+</t>
+</list>
+</t>
+<t>As there is no matching transform between the WAN ports A2 and B2 in C-PE1 and C-PE2, 
+respectively, no IPsec Tunnel will be established.</t>
+ </section>
+ </section> 
+ </section>
+  <section title="Security Considerations"> 
+ <t>The document describes the encoding for SD-WAN edge nodes to advertise its properties 
+ to their peers to its RR, which propagates to the intended peers via untrusted networks.</t> 
+ <t>The secure propagation is achieved by secure channels, such as TLS, SSL, or IPsec, 
+ between the SD-WAN edge nodes and the local controller RR.</t> 
+ <t>SD-WAN edge nodes might not have secure channels with the RR. In this case, 
+ BGP connection has be established over IPsec or TLS.</t>  
+ <t>  
+ This document describes the encoding for SD-WAN edge nodes to advertise their properties to their peers via 
+ their respective Route Reflector (RR), which then propagates the information to the intended peers. 
+ SD-WAN edge nodes to advertise its properties to their peers via a secure connection (TLS, SSL, or IPsec)
+ to the RR which propagates to the intended peers over a secure connection (TLS, SSL, or IPsec).   
+ </t>
+ <t>
+ In a walled garden SD-WAN deployment where all SD-WAN edges and the central controller are under one 
+ administrative control and the network operates within a closed environment, the threat model 
+ is primarily on internal threats, misconfigurations, and localized physical risks. 
+ Unauthorized physical access to SD-WAN edge devices in remote locations is a concern. 
+ Such access might allow attackers to compromise the edge devices and potentially manipulate the 
+ advertised Client prefixes with VPN IDs (or Route Targets) that do not belong to them. 
+ This can lead to unauthorized data interception and traffic redirection.
+ </t>
+ <t>
+Therefore, it is necessary to ensure physical security controls are in place at remote locations, 
+including locks, surveillance, and access controls. Additionally, the RR needs to verify the BGP 
+advertisements from each SD-WAN edge to ensure that their advertised VPN IDs (or Route Targets) 
+are truly theirs. This verification helps prevent unauthorized advertisement of prefixes and 
+ensures the integrity of the routing information within the SD-WAN environment.
+Ensuring secure communication between SD-WAN edge nodes and the central controller within a 
+walled garden deployment is crucial. It is essential to utilize secure communication channels 
+such as TLS or IPsec for all communications between edge nodes and the controller.
+</t>
+ </section>
+ 
+  <section title="IANA Considerations"> 
+   <section title="Hybrid (SD-WAN) Overlay SAFI"> 
+	<t>IANA has assigned SAFI = 74 as the Hybrid (SD-WAN) SAFI.</t>
+   </section>
+    <section title="Tunnel Encapsulation Attribute Type"> 
+	<t>IANA is requested to assign a type from the BGP Tunnel Encapsulation Attribute Tunnel Types as follows [RFC8126]:</t>
+	     <artwork><![CDATA[  
+ Value   Description    Reference
+-----   ------------   ---------
+ 25	  SD-WAN-Hybrid   (this document)
+		]]></artwork>
+	</section>
+	  <section title="Tunnel Encapsulation Attribute Sub-TLV Types"> 
+	  <t>IANA is requested to assign the following sub-Types in the BGP Tunnel Encapsulation Attribute Sub-TLVs registry:</t>
+	  	     <artwork><![CDATA[  
+   Value   Type Description            Reference     Section 
+   -----   -----------------------     ------------- -------
+    64	IPSEC-SA-ID Sub-TLV            This document  8.1
+    65	Extended Port Property Sub-TLV This document  7.0 
+    66	Underlay Transport Sub-TLV     This document  7.1
+    67	IPsec SA Rekey Counter Sub-TLV         This document  8.2
+    68	IPsec Public Key Sub-TLV       This document  8.3 
+    69	IPsec SA Proposal Sub-TLV      This document  8.4
+    70	Simplified IPsec SA sub-TLV    This document  8.5 
+		]]></artwork>
+	  </section>
+ </section>
+ 
+</middle>	
+
+  <back>
+    <references title="Normative References">
+     
+      <?rfc include="reference.RFC.2119"?>
+	  <?rfc include="reference.RFC.4271"?>
+	  <?rfc include="reference.RFC.4360"?>
+	  <?rfc include="reference.RFC.4364"?>
+  	  <?rfc include="reference.RFC.4456"?>
+	  <?rfc include="reference.RFC.4760"?>  
+	  <?rfc include="reference.RFC.7296"?>
+	  <?rfc include="reference.RFC.7606"?>
+	  <?rfc include="reference.RFC.8126"?>
+      <?rfc include="reference.RFC.8174"?>
+      <?rfc include="reference.RFC.8277"?>
+	  <?rfc include="reference.RFC.8489"?>
+      <?rfc include="reference.RFC.9012"?>
+
+    </references>
+
+    <references title="Informative References">
+  	  <?rfc include="reference.RFC.5114"?>
+   	  <?rfc include="reference.RFC.5903"?>	  
+	  <?rfc include="reference.RFC.9016"?>
+ 
+	 <reference anchor="Net2Cloud" target= "https://datatracker.ietf.org/doc/draft-ietf-rtgwg-net2cloud-problem-statement/">
+	 <front>
+	    <title> Dynamic Networks to Hybrid Cloud DCs: Problem Statement and Mitigation Practice</title>
+		<author>
+		 <organization>L. Dunbar, A Malis, C. Jacquenet, M. Toy and  K. Majumdar</organization>
+		</author>
+		<date month="Sept" year="2023"/>
+     </front>
+	 </reference>
+	
+	<reference anchor="IANA-AH" target="https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9">
+	 <front>
+	    <title> IANA-AH </title>
+		<author>
+		 <organization>IANA</organization>
+		</author>
+     </front>
+	 </reference>
+	 
+	 <reference anchor="IANA-ESP" target="https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9">
+	 <front>
+	    <title> IANA-ESP </title>
+		<author>
+		 <organization>IANA</organization>
+		</author>
+     </front>
+	 </reference>
+	 
+    </references>
+	<section title="Acknowledgments">
+	<t>Acknowledgements to Wang Haibo, Shunwan Zhuang, Hao Weiguo, and ShengCheng for implementation contribution. 
+	Many thanks to Yoav Nir, Graham Bartlett, Jim Guichard, John Scudder, and Donald Eastlake for their 
+	review and suggestions.</t>
+
+	</section>
+	<section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-contributors">Contributors</name>
+   <t>Below is a list of other contributing authors:</t>
+   <t>
+   <list style="symbols">
+   <t>
+      	<contact fullname="Gyan Mishra">
+        <organization showOnFrontPage="true">Verizon</organization>
+        <address>
+          <postal>     
+            <country>USA</country>
+          </postal>
+          <email>gyan.s.mishra@verizon.com</email>
+        </address>
+      </contact>, </t>  
+	 <t>
+	  <contact fullname="Shunwan Zhuang">
+        <organization showOnFrontPage="true">Huawei</organization>
+        <address>
+          <postal>
+            <city>Beijing</city>
+            <country>China</country>
+          </postal>
+          <email>zhuangshunwan@huawei.com</email>
+        </address>
+      </contact>,</t> 
+	  <t>
+      <contact fullname="Sheng Cheng">
+        <organization showOnFrontPage="true">Huawei</organization>
+        <address>
+          <postal>     
+            <city>Beijing</city>
+            <country>China</country>
+          </postal>
+          <email>shengcheng@huawei.com</email>
+        </address>
+      </contact>, and </t>
+	  <t>
+	  <contact fullname="Donald Eastlake">
+        <organization showOnFrontPage="true">Futurewei</organization>
+        <address>
+          <postal>     
+            <country>USA</country>
+          </postal>
+          <email>d3e3e3@gmail.com</email>
+        </address>
+      </contact>.</t> 
+	  </list>
+	  </t> 
+    </section>
+  </back>
+</rfc>
