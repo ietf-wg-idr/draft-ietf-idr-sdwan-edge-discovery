@@ -243,7 +243,8 @@ re-advertises routes received from client routers with the Next_HOP address set 
 (due to the SD-WAN feature configuration) and includes a BGP attribute indicating the SD-WAN Hybrid Tunnel. Client routes 
 MAY be advertised using the following AFI/SAFIs: Unicast IPv4/IPv6 (1/1, 2/1) and L3VPN IPv4/IPv6 
 (1/128, 2/128). The SD-WAN tunnel indication can be conveyed using either the 
-Encapsulation Extended Community or the Tunnel Encapsulation Attribute.
+Encapsulation Extended Community or the Tunnel Encapsulation Attribute.  Client routes the Tunnel Encapsulation Attribute (TEA)
+as specified in RFC9012 and this document does not alterthat behavior.  
 </t>
 <t hangText="Advertise Underlay Routes (SD-WAN NLRIs) with SD-WAN Hybrid Tunnel Encapsulation Attribute:"> A BGP speaker advertises 
 SD-WAN NLRI for IPv4/IPv6 (AFI/SAFI 1/74 or 2/74) with the NEXT_HOP attribute set to the local address of 
@@ -251,8 +252,21 @@ the advertising speaker, and includes a BGP Tunnel Encapsulation Attribute with 
 The SD-WAN NLRI identifies the port (or ports) that an underlay tunnel (identified by SD-WAN Node ID)
 within the logical SD-WAN Hybrid Tunnel (identified by Tunnel Egress End point) for which the 
 BGP speaker is advertising encapsulation or IPsec SA related information via the 
-SD-WAN Hybrid Tunnel Encapsulation Attribute. The SD-WAN Hybrid Tunnel Encapsulation Attribute contains 
-IPsec SA and, optionally, NAT-related information. </t>
+SD-WAN Hybrid Tunnel Encapsulation Attribute (TEA). The use of TEA with the SD-WAN NLRI (AFI/SAFI 1/74 or 2/74) 
+is outside the scope of section 6 of RFC9012. This document defines the usage of TEA with the SD-WAN NLRI. The following Sub-TLVs
+are defined in this document for use with the SD-WAN Hybrid Tunnel TLV for AFI/SAFI SD-WAN NLRI: 
+<list style="symbols">
+<li> IPsec SA ID (64), </li>
+<li> Extended Port Attribute (65), </li>
+<li> Underlay Typeb (66), </li>
+<li> IPsec SA Rekey Counter (67) </li>
+<li> IPsec Public Key (68), </li>
+<li> IPsec SA Proposal (69), </li>
+<li> Simplified IPsec (70), </li>
+</list> 
+BGP Peers supporting the SD-WAN Hybrid MUST support the Tunnel Egress End Point and Color sub-TLV defined in [RFC9012]
+plus these 7 new Sub-TLVs. All other Sub-TLVs should ignored via an access rule (deny as default, and accept limited these 9 sub-TLVs.  
+</t>
 </list>
 </t>
 <t>
