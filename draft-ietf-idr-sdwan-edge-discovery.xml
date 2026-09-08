@@ -95,12 +95,15 @@
 
     <abstract>
      <t>The document describes the BGP mechanisms for SD-WAN (Software Defined Wide Area Network)
-	 edge node attribute discovery. These mechanisms include a new 
+	 edge node attribute discovery. These BGP mechanisms include a new 
 	 tunnel type and sub-TLVs for the BGP Tunnel-Encapsulation Attribute (RFC9012) and 
 	 set of NLRI (network layer reachability information) for SD-WAN underlay information. 
 	 </t> 
+	<t>
+	The SD-WAN underlay infromation is passed to a SD-WAN tunnel manager that consumes
+	the underlay information to establish IPsec, rekey, and tear down IPsec SAs. The
+	internals of this SD-WAN tunnel manager application is outside the scope of this document.  
 	
-
     </abstract>
 
     <note title="Requirements Language">
@@ -145,17 +148,26 @@
      <t>This document defines a new SD-WAN Hybrid Tunnel type and associated sub-TLVs for the 
 	 BGP Tunnel Encapsulation Attribute [RFC9012], as well as new NLRIs for advertising SD-WAN 
 	 underlay information. These extensions enable SD-WAN edge nodes to exchange the 
-	 information necessary to establish and update secure SD-WAN overlay tunnels, as described in [Net2Cloud].</t>	 
+	 information necessary to establish and update secure SD-WAN overlay tunnels, as described in [Net2Cloud].</t>
 	<t>In the context of this document, BGP Route Reflector (RR) is 
 	the component of the SD-WAN Controller system that receives the BGP UPDATE from SD-WAN edges 
 	and in turn propagates the information to the intended peers 
-	that are authorized to communicate via the SD-WAN overlay network. </t>
+	that are authorized to communicate via the SD-WAN overlay network. The BGP policy at the RR logically operates as 
+    a trust anchor providing security at authentication and integrity.  If new BGP security mechanisms are used, 
+	the BGP RR can provide authentication, integrity, and confidentiality.
+	</t>
 	<t> While the BGP RR functionin the SD-WAN controller scenario could be implemented with targeted BGP sessions
     control by policy and secured by security features that supply authentication, integrity, and confidentiality, 
 	the authors chose to limit the descriptions to the BGP RR.  This choice is due to the current status 
 	of BGP security issues and not the BGP peer exchanges described in this text. Due to this decision, the 
 	BGP interactions are not strictly limited to BGP RR features </t>
-
+	<t>BGP mechanisms are used to pass IPsec-bearing sub-TLVs.  The BGP Peer process checks the 
+	syntactic content of these sub-TLVs (e.g. field lengths are consistent with stated length, values present when required, 
+	and Sub-TLVs boundaries aligned).  Semantic validation are handled by the SD-WAN Tunnel Manager (a local application process).
+	Therefore, BGP speaker for SD-WAN edge discovery MUST NOT peform semantic validation of IPsec parameters, and 
+	MUST NOT treat an advertisement as malformed on semantic grounds. BGP information with incorrect semantic meaning 
+    is propagated by BGP since BGP does not detect semantic errors. 
+	</t> 
 	  <section title="Secure L3VPN Services over SD-WAN">
 	  <t> An SD-WAN network defined in [MEF70.1] and [MEF70.2] refers to a policy-driven network  
 	  over multiple heterogeneous underlay networks tailored to get better WAN bandwidth  
@@ -226,6 +238,9 @@
 	       
 		  <t hangText = "Secure Transport Connection:"> A transport layer security mechanism that 
 		  provides authentication and integrity of routing updates over untrusted networks.</t> 
+		 <t hangText = "SD-WAN Tunnel Manager:"> A local process that consumes the underlay-route 
+		  information and extablishes, rekeys, and tears down the IPOsec SAs.  The internals 
+		  of this application are out of scope for this document.</t>
 	</list> 
 	</t>
 	<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", 
