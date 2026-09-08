@@ -518,6 +518,21 @@ Tunnel attribute with a SD-WAN Hybrid tunnel TLV to advertise the detailed prope
  </section> 
 </section> 
  <section title="IPsec SA Property Sub-TLVs">
+<t>The IPsec SA Property Sub-TLVs defined in this section specify encodings that allow 
+BGP UPDATE messages to carry IPsec-related parameters associated with SD-WAN Hybrid Tunnels
+to authorized peers. BGP does not establish, negotiate, derive, or maintain IPsec SAs. 
+The SD-WAN Manager handles the IPsec SAs.  BGP validation of these Sub-TLVs is 
+limited to their encoding and syntactic validity.  Semantic processing of the IPsec information 
+distributed by BGP mechanisms is handled by the SD-WAN Manager.  The creation and operation 
+of an IPsec SA, including algorithm validation, key derivation, 
+SA state management, rekeying, and packet protection, are performed by the IPsec implementations
+associated with the SD-WAN Manager according to [RFC4301] and, when IKEv2 is used, [RFC7296], together with local policy. 
+While these Sub-TLV formats could potentially be reused in other applications that require IPsec SA signaling over BGP, 
+this document defines the BGP syntactic format and ties it to meaning within the SD-WAN Edge Discovery framework 
+handled by the SD-WAN Manager. </t>
+
+ <t>If any sub-TLV is malformed, error handling MUST follow the procedure in Section 13 of [RFC9012].</t>
+
  <t> The IPsec SA Property Sub-TLVs defined in this section are used to signal IPsec SA parameters for  
  SD-WAN Hybrid Tunnels as defined in this document. While these Sub-TLV formats could potentially 
  be reused in other applications that require IPsec SA signaling over BGP, this document defines 
