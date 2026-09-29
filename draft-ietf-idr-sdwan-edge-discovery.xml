@@ -196,7 +196,7 @@
 		  <t hangText="CPE-Based VPN:">Virtual Private Secure network formed among C-PEs. This is to 
 		  differentiate such VPNs from most commonly used PE-based VPNs discussed in [RFC4364].</t>
 		  <t hangText="CPN:">Customer Premises Network</t>
-		  <t hangText="IPsec Function:"> The local function on an SD-WAN edge node that consumes the IPsec-related parameters received via BGP and performs IPsec SA establishment, algorithm and parameter validation, key derivation, SA state management, rekeying, and packet protection. The internal operation of the IPsec function is outside the scope of this document.</t>
+		  <t hangText="IPsec Function:"> The local function on an SD-WAN edge node that consumes the IPsec-related parameters received via BGP and performs IPsec SA establishment, algorithm and parameter validation, key derivation, SA state management, rekeying, and packet protection. The internal operation of the IPsec Function is outside the scope of this document.</t>
 		   <t hangText="SD-WAN Hybrid Tunnel:">A single logical tunnel that combines several links of different 
 		   encapsulation into a single tunnel. This logical tunnel MAY exist as part of a SD-WAN Secure L3VPN or 
 		   simply be a SD-WAN secure link for a flat network. </t>
@@ -263,7 +263,10 @@
         document perform no negotiation of these parameters; a
         participant whose provisioned parameters do not match those of
         its peer might not establish a security association with that
-        peer.
+        peer. The IPsec Function is responsible for processing the advertised 
+		IPsec parameters, including any required negotiation, and for 
+		determining whether they are compatible with the locally provisioned security policy.
+      </li>
       </li>
     </ul>
 
@@ -274,7 +277,10 @@
       tunnel and security parameters of all participants.
     </t>
 	
-	<t>Although the procedures in this document are described in terms of a BGP Route Reflector that is part of the SD-WAN Controller, the BGP interactions defined here are not inherently limited to Route Reflector functionality. Equivalent BGP peer arrangements MAY be used, provided that they operate under the same administrative control, authorization policy, and security assumptions specified in this section.
+	<t>Although the procedures in this document are described in terms of a BGP Route Reflector that is part of the SD-WAN Controller, the BGP interactions defined here are not 
+	inherently limited to Route Reflector functionality. Equivalent BGP peer arrangements 
+	MAY be used, provided that they operate under the same administrative control, 
+	authorization policy, and security assumptions specified in this section.
 	</t>
   </section>
 
@@ -721,7 +727,20 @@ frequency and size of BGP UPDATE messages.
  </section> 
 </section> 
  <section title="SD-WAN-Specific Sub-TLVs">
- <t> The SD-WAN-specific Sub-TLVs defined in this section allow BGP UPDATE messages to carry tunnel, port, and IPsec-related parameters associated with SD-WAN Hybrid Tunnels to authorized peers. For the IPsec-related Sub-TLVs, BGP does not establish, negotiate, derive, or maintain IPsec SAs. BGP validation of these Sub-TLVs is limited to their encoding and syntactic validity. Semantic validation of IPsec parameters, including algorithm suitability, transform compatibility, key validity, and supported key-exchange groups, is performed by the IPsec function. A syntactically valid advertisement whose IPsec parameters cannot be used by the IPsec function is not considered malformed for BGP processing. The creation and operation of an IPsec SA, including algorithm validation, key derivation, SA state management, rekeying, and packet protection, are performed by the IPsec implementation according to [RFC4301] and, when IKEv2 is used, [RFC7296], together with local policy. While these Sub-TLV formats could potentially be reused in other applications that require SD-WAN-related signaling over BGP, this document defines their semantics and behavior specifically within the SD-WAN Edge Discovery framework. 
+ <t> The SD-WAN-specific Sub-TLVs defined in this section allow BGP UPDATE messages to carry tunnel, port, and IPsec-related parameters 
+ associated with SD-WAN Hybrid Tunnels to authorized peers. For the IPsec-related Sub-TLVs, 
+ BGP does not establish, negotiate, derive, or maintain IPsec SAs. BGP validation 
+ of these Sub-TLVs is limited to their encoding and syntactic validity. 
+ Semantic validation of IPsec parameters, including algorithm suitability, 
+ transform compatibility, key validity, and supported key-exchange groups, is performed 
+ by the IPsec Function. A syntactically valid advertisement whose IPsec parameters 
+ cannot be used by the IPsec Function is not considered malformed for BGP processing. 
+ The creation and operation of an IPsec SA, including algorithm validation, key derivation, 
+ SA state management, rekeying, and packet protection, are performed by the IPsec Function
+ according to [RFC4301] and, when IKEv2 is used, [RFC7296], together with local policy. 
+ While these Sub-TLV formats could potentially be reused in other applications that 
+ require SD-WAN-related signaling over BGP, this document defines their semantics and 
+ behavior specifically within the SD-WAN Edge Discovery framework. 
 </t>
 <t> If any Sub-TLV is malformed, error handling MUST follow the procedure in Section 13 of <xref target="RFC9012"></xref>. 
 </t>  
@@ -826,9 +845,10 @@ operational state changes without resending full SA parameter sets, and allowing
 	</t> 
 	<t>Flags (7 bits): Reserved for future use. These bits 
 	    MUST be set to zero and MUST be ignored upon receipt.</t> 
-	<t>Rekey Counter (64 bits): Carries an unsigned counter associated with rekeying of the identified IPsec SA. The Rekey Counter is opaque to BGP and is passed unchanged to the SD-WAN/IPsec implementation. BGP does not use this value for route selection, freshness determination, or replay detection. </t>
+	<t>Rekey Counter (64 bits): Carries an unsigned counter associated with rekeying of the identified IPsec SA. The Rekey Counter is opaque to BGP and is passed unchanged to 
+	 the SD-WAN/IPsec Function. BGP does not use this value for route selection, freshness determination, or replay detection. </t>
 	<t>SPI: Carries the 32-bit Security Parameter Index of the IPsec SA. Together with the IPsec protocol and destination address associated with the advertised tunnel endpoint, the SPI identifies the inbound IPsec SA as described in <xref target="RFC4301"/>.</t>
-	 <t>Nonce Data: Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. The nonce can be used by the receiving SD-WAN/IPsec implementation as a freshness value when processing SA information. Generation, storage, comparison, and replay handling of the nonce are outside the scope of BGP.</t>
+	 <t>Nonce Data: Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. The nonce can be used by the receiving SD-WAN/IPsec Function as a freshness value when processing SA information. Generation, storage, comparison, and replay handling of the nonce are outside the scope of BGP.</t>
     </list>
 	</t>
   <t hangText="Sub-TLV Error Handling:"> The Sub-TLV is malformed if the Length field is not equal to 18 + Nonce Length, or if the Nonce Length is less than 8 or greater than 237 octets.</t> 
@@ -1004,13 +1024,14 @@ Malformed Sub-TLVs are handled according to [RFC9012].
 	</t>
 	<t hangText="Algorithms (16 bits):"> Identifies the cryptographic algorithm used by the advertised SA. When SA-Type = 1 (AH), the Algorithm field identifies the AH integrity algorithm using the corresponding value from the IANA Integrity Algorithm registry. When SA-Type = 2 (ESP), the Algorithm field identifies the ESP encryption algorithm using the corresponding value from the IANA Encryption Algorithm registry.</t> 	
 
-	<t hangText="Rekey Counter (4 octet):">  Carries an unsigned counter associated with key rotation for the advertised IPsec SA. The Rekey Counter identifies the key generation associated with the advertised keying material. Interpretation of the counter and selection of the active key are performed by the SD-WAN/IPsec implementation. The Rekey Counter is opaque to BGP.</t>
+	<t hangText="Rekey Counter (4 octet):">  Carries an unsigned counter associated with key rotation for the advertised IPsec SA. The Rekey Counter identifies the key generation associated with the advertised keying material. Interpretation of the counter and selection of the active key are performed by the SD-WAN/IPsec Function. The Rekey Counter is opaque to BGP.</t>
 	<t hangText="key1 length (8 bits):"> Specifies the length, in octets, of the Key 1 field. The required key length is determined by the selected Algorithm and the configured IPsec security profile.</t>
 	<t hangText="Public Key 1:"> Carries one generation of keying material for the advertised IPsec SA. The encoding and required length of the keying material are determined by the selected Algorithm and the configured IPsec security profile.</t>
 	<t hangText="key2 length (8 bits):"> Specifies the length, in octets, of the Key 2 field. The required key length is determined by the selected Algorithm and the configured IPsec security profile.</t>
-	<t hangText="Public Key 2:"> Carries an alternate generation of keying material for the advertised IPsec SA. Key 1 and Key 2 allow keying material for a new generation to be distributed while the previous generation remains available during rekeying. Selection and retirement of the active key generation are performed by the SD-WAN/IPsec implementation and are outside the scope of BGP.</t>
+	<t hangText="Public Key 2:"> Carries an alternate generation of keying material for the advertised IPsec SA. Key 1 and Key 2 allow keying material for a new generation to be distributed while the previous generation remains available during rekeying. Selection and retirement of the active key generation are performed by the 
+	SD-WAN/IPsec Function and are outside the scope of BGP.</t>
 	<t hangText="nonce-length (8 bits):"> Specifies the length, in octets, of the Nonce field. The Nonce is an SD-WAN-specific value. The Nonce Length MUST be at least 8 octets. A Nonce Length of at least 16 octets is RECOMMENDED. The combined Key 1, Key 2, and Nonce lengths MUST satisfy the Sub-TLV Length constraint specified above.</t>
-	<t hangText="Nonce:"> Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. Generation and processing of the nonce are performed by the SD-WAN/IPsec implementation and are outside the scope of BGP.</t>
+	<t hangText="Nonce:"> Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. Generation and processing of the nonce are performed by the SD-WAN/IPsec Function and are outside the scope of BGP.</t>
 	<t hangText="Duration (32 bits):"> Specifies the lifetime of the advertised IPsec SA in seconds. 
 	</t> 
   </list>
@@ -1443,7 +1464,8 @@ IPsec SA Rekey Counter Sub-TLV, IPsec Public Key Sub-TLV, and IPsec SA Proposal 
 </t>
 <t>For existing IPsec SAs, an SD-WAN node that receives the advertisement can simply use one of the existing SAs to forward traffic for the associated client routes. If multiple SAs are available for a given client route, local policy on the receiving SD-WAN node MAY determine which SA is selected. 
 </t>
-<t>When parameters carried in these Sub-TLVs are used to establish a new IPsec SA, the receiving SD-WAN node passes the advertised parameters to its IPsec function. The IPsec implementation determines whether the advertised transforms and algorithms are compatible with local configuration and performs SA establishment according to [RFC4301] and, when IKEv2 is used, [RFC7296]. These attributes, received via the Tunnel Encapsulation Attribute, provide the parameters associated with establishing the IPsec tunnel between local and remote WAN ports. BGP itself does not perform IPsec negotiation, compatibility checking, or SA establishment. If the IPsec implementation cannot use the advertised parameters, this does not by itself make the BGP advertisement malformed.</t>
+<t>When parameters carried in these Sub-TLVs are used to establish a new IPsec SA, the receiving SD-WAN node passes the advertised parameters to its IPsec Function. The IPsec Function determines whether the advertised transforms and algorithms are compatible with local configuration and performs SA establishment according to [RFC4301] and, when IKEv2 is used, [RFC7296]. These attributes, received via the Tunnel Encapsulation Attribute, provide the parameters associated with establishing the IPsec tunnel between local and remote WAN ports. BGP itself does not perform IPsec negotiation, compatibility checking, or SA establishment. 
+If the IPsec Function cannot use the advertised parameters, this does not by itself make the BGP advertisement malformed.</t>
 
 <t>The C-PE devices do not attempt to negotiate IPsec SA parameters or transform sets with remote peers. Instead, the configurations must match as advertised. If there is a mismatch, either in the simple IPsec SA identifiers or in the detailed transform parameters, no tunnel is established. Implementations MAY discard incompatible proposals or log them for operational visibility. 
 </t>
@@ -1556,7 +1578,7 @@ respectively, no IPsec Tunnel will be established.</t>
 <t>
 These secure transport mechanisms for BGP provide different levels of protection against tampering or interception. Such protection is needed for BGP UPDATEs carrying SD-WAN information, including cryptographic attributes. Without such protection, the system may be vulnerable to spoofed tunnel attributes, unauthorized route injections, or replayed IPsec setup information.</t>  
 
-<t> As specified in Section 3.4, BGP only distributes IPsec-related parameters; IPsec SA establishment and operation are performed by the IPsec implementation according to <xref target="RFC4301"/> and, when IKEv2 is used, <xref target="RFC7296"/>.</t>
+<t> As specified in Section 3.4, BGP only distributes IPsec-related parameters; IPsec SA establishment and operation are performed by the IPsec Function according to <xref target="RFC4301"/> and, when IKEv2 is used, <xref target="RFC7296"/>.</t>
 
  <t>
  In closed or "walled garden" deployments, where SD-WAN edge nodes and the RR are within a trusted and secured environment, the risk of interception or tampering may be reduced. However, the peer-authentication and integrity requirements specified in Section 2.2 still apply.
