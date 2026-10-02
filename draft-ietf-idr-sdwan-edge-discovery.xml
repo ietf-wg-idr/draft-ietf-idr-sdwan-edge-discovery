@@ -11,7 +11,7 @@
 <?rfc inline="yes"?>
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
-<rfc category="std" docName="draft-ietf-idr-sdwan-edge-discovery-31"
+<rfc category="std" docName="draft-ietf-idr-sdwan-edge-discovery-32"
      ipr="trust200902">
   <front>
     <title abbrev="SD-WAN Edge Discovery">SD-WAN Edge and Underlay Tunnel Discovery Using BGP</title>
@@ -196,7 +196,7 @@
 		  <t hangText="CPE-Based VPN:">Virtual Private Secure network formed among C-PEs. This is to 
 		  differentiate such VPNs from most commonly used PE-based VPNs discussed in [RFC4364].</t>
 		  <t hangText="CPN:">Customer Premises Network</t>
-		  <t hangText="IPsec Function:"> The local function on an SD-WAN edge node that consumes the IPsec-related parameters received via BGP and performs IPsec SA establishment, algorithm and parameter validation, key derivation, SA state management, rekeying, and packet protection. The internal operation of the IPsec function is outside the scope of this document.</t>
+		  <t hangText="IPsec Function:"> The local function on an SD-WAN edge node that consumes the IPsec-related parameters received via BGP and performs IPsec SA establishment, algorithm and parameter validation, key derivation, SA state management, rekeying, and packet protection. The internal operation of the IPsec Function is outside the scope of this document.</t>
 		   <t hangText="SD-WAN Hybrid Tunnel:">A single logical tunnel that combines several links of different 
 		   encapsulation into a single tunnel. This logical tunnel MAY exist as part of a SD-WAN Secure L3VPN or 
 		   simply be a SD-WAN secure link for a flat network. </t>
@@ -263,7 +263,7 @@
         document perform no negotiation of these parameters; a
         participant whose provisioned parameters do not match those of
         its peer might not establish a security association with that
-        peer.
+        peer. The IPsec Function is responsible for processing the advertised IPsec parameters, including any required negotiation, and for determining whether they are compatible with the locally provisioned security policy.
       </li>
     </ul>
 
@@ -487,7 +487,7 @@ error handling, and considerations for managing SD-WAN technologies.
     containing an SD-WAN Hybrid Tunnel TLV is REQUIRED. An SD-WAN
     Underlay Route MUST NOT be accompanied by an Encapsulation Extended
     Community. The corresponding error handling is specified in
-    Section 3.7.
+    Section 3.8.
   </t>
 
   <t>
@@ -528,96 +528,8 @@ error handling, and considerations for managing SD-WAN technologies.
   </t>
 </section>
 
-<section title="SD-WAN Hybrid Tunnel TLV Encoding">
-<t> 
-<list style="hanging">
-<t hangText="Name:"> SD-WAN Hybrid Tunnel </t>
-<t hangText="Code:"> 25 (IANA assigned)</t>
-<t hangText="Description:">The SD-WAN Hybrid Tunnel identifies a virtual tunnel that overlays a 
-path across a set of underlay links between two BGP peers. These underlay links may use various technologies 
-(e.g., MPLS, Layer 2 direct connections, or Layer 3 public Internet). The term hybrid reflects that different 
-types of underlay links can be used simultaneously.</t>
-<t hangText="Encoding:">Per [RFC9012], the SD-WAN Hybrid Tunnel Type MAY be encoded using either of the following two BGP attributes: the Tunnel Encapsulation Attribute, or the Encapsulation Extended Community as a "barebones" tunnel identification. The encoding of the SD-WAN Hybrid Tunnel Type in each of these BGP attributes is described below. The applicability of these two forms to Client Routes and SD-WAN Underlay Routes is specified in Section 3.1. 
-<list style="hanging">
-<t hangText="SD-WAN Hybrid tunnel Encoded in Encapsulation Extended Community:"> As specified in Section 3.1, the SD-WAN Hybrid Tunnel Type encoded in the Encapsulation Extended Community is used only for Client Route advertisements. The BGP Next Hop identifies the Tunnel Egress Endpoint and SHOULD be set to a reachable address of the advertising SD-WAN edge node. </t>
-<t hangText="SD-WAN Hybrid tunnel Encoded in Tunnel Encapsulation Attribute:"> As specified in Section 3.1, the SD-WAN Hybrid Tunnel TLV encoded in the Tunnel Encapsulation Attribute can be used for both Client Route advertisements and SD-WAN Underlay Route advertisements. The SD-WAN Hybrid Tunnel TLV may contain the Sub-TLVs permitted for the associated route type, as specified in Section 3.1 and summarized in Figure 1.</t>
-
-<t>For SD-WAN Underlay Routes using SAFI 74, if a Tunnel Egress Endpoint Sub-TLV is not included in the SD-WAN Hybrid Tunnel TLV, it is treated as if a Tunnel Egress Endpoint Sub-TLV with an Address Family value of 0 were included. For Client Routes, Tunnel Egress Endpoint processing follows [RFC9012]. Figure 1 summarizes this Sub-TLV support in a tabular format.
-</t>
-</list>
-</t>
-</list>
-</t>
-<t>
- <figure anchor="Sub-TLV Support for Client and Underlay Routes"
-           title="Sub-TLV Support for Client and Underlay Routes">
-           <artwork><![CDATA[  
-		   
-Client Routes AFI/SAFI = 1/1, 2/1, 1/128, 2/128
-Underlay Routes AFI/SAFI = 1/74 and 2/74 
-                         
-Sub-TLV            Code  Client Routes  Underlay Routes      
-------            ----  -------------  ---------------
-Encapsulation        1   not valid     not valid  
-Protocol             2   not valid     not valid  
-Color                4   not valid     not valid            
-Load-Balancing Block 5   not valid     not valid  
-Tunnel Egress EP     6   required      required *1
-DS Field             7   not valid     not valid      
-UDP Dest. Port       8   not valid     not valid  
-Embedded Label H.    9   not valid     not valid   
-MPLS label Stack    10   not valid     not valid   
-Prefix-SID          11   not valid     not valid    
-Preference          12   not valid     not valid  
-Binding SID         13   not valid     not valid  
-ENLP                14   not valid     not valid  
-Priority            15   not valid     not valid   
-SPI/SI              16   not valid     not valid 
-SRv6 Binding SID    20   not valid     not valid   
-IPsec SA ID         64   valid         valid   
-Extended Port Attr  65   not valid     valid  
-IPsec SA Rekey Cnt  67   valid         valid  
-IPsec Public Key    68   valid         valid  
-IPsec SA Proposal   69   valid         valid   
-Simplified IPsec SA 70   valid         valid   
-
-
-*1 - For SD-WAN Underlay Routes, if a Tunnel Egress Endpoint Sub-TLV 
-     is not included, it is treated as if a Tunnel Egress Endpoint 
-	 Sub-TLV with AFI 0 were included. 
-	]]></artwork>
- </figure>
-</t>
-<t>The Color Sub-TLV defined in [RFC9012] is not used by the SD-WAN procedures defined in this document. Client Routes carry the Color Extended Community, while SD-WAN Underlay Routes carry the SD-WAN-Color field in the SAFI-74 NLRI. The receiving BGP speaker correlates these values as described in Sections 3.5.1, 3.5.3, and 3.1.</t>
-
-<section title="Summary of Validation Procedure">
-<t> The SD-WAN Hybrid Tunnel TLV and its Sub-TLVs MUST first be validated for correct encoding and applicability as specified in this section and Section 3.4. Route-specific validation procedures are specified in Section 3.5.2 for Client Routes and Section 3.6.2 for SD-WAN Underlay Routes. Error handling is specified in Section 3.7.
-
-After the SD-WAN Hybrid Tunnel TLV has been validated, the receiving BGP speaker processes it according to the applicable route procedure.  
-</t>
-</section>  
-
-<section title="Processing Considerations for SD-WAN Hybrid Tunnel Encoding">
-<t> When Encapsulation Extended Community with a SD-WAN Hybrid Tunnel Type is attached to a client route, 
-the detailed SD-WAN tunnel attributes are not included in the same BGP UPDATE message, 
-but are advertised separately using the SD-WAN NLRI. Sections 3.3 and 3.4 describe the SD-WAN Underlay Route and the associated SD-WAN-specific Sub-TLVs.
-The SD-WAN NLRI is originated by the C-PE, and the BGP Next Hop is set to a reachable address of the C-PE, typically its loopback address. The remote BGP speaker uses this loopback address to 
-associate the client route with the corresponding logical SD-WAN Hybrid Tunnel, 
-and the SD-WAN NLRI SD-WAN Node ID and port to the underlay tunnel within the logical SD-WAN Hybrid Tunnel.  
-This separation allows for independent advertisement rates and avoids 
-bloating BGP UPDATE messages with the large amount of data required for IPsec SA, cryptographic keys, and related parameters.
-</t>
-<t>When the Tunnel Encapsulation Attribute with SD-WAN Hybrid Tunnel TLV is attached to the client route, 
-the detailed underlay tunnel attributes, such as IPsec-related parameters, are included directly in the 
-same BGP UPDATE as the client route. As a result, there is no need for a separate UPDATE message associated 
-with the C-PE loopback address. However, this approach means that any changes to underlay attributes (e.g., IPsec keys or cryptographic parameters) 
-necessitate re-advertising the client route with an updated Tunnel Encapsulation Attribute, which can increase both the 
-frequency and size of BGP UPDATE messages.    
-</t> 
-</section> 
-</section> 
 <section title="SD-WAN Underlay Route Advertisement">
- <t>An Edge BGP Peer using BGP SD-WAN discovery advertises an SD-WAN Underlay Route whose NLRI is encoded as specified in Section 3.3.1. The route carries a Tunnel Encapsulation Attribute containing an SD-WAN Hybrid Tunnel TLV to advertise the detailed properties associated with the public-facing WAN port or ports and their associated IPsec tunnels. The SD-WAN Underlay Route carries control-plane information describing an SD-WAN WAN port and its tunnel properties; the SD-WAN NLRI is not itself installed as a route for forwarding user traffic. The Edge BGP Peer sends this information to its designated RR via a secure transport connection. Each BGP UPDATE containing an SD-WAN Underlay Route MUST include a Tunnel Encapsulation Attribute with an SD-WAN Hybrid Tunnel TLV. If an SD-WAN Underlay Route is received without the required Tunnel Encapsulation Attribute and SD-WAN Hybrid Tunnel TLV, the route MUST be handled as Treat-as-withdraw as specified in Section 3.7.3. 
+ <t>An Edge BGP Peer using BGP SD-WAN discovery advertises an SD-WAN Underlay Route whose NLRI is encoded as specified in Section 3.2.1. The route carries a Tunnel Encapsulation Attribute containing an SD-WAN Hybrid Tunnel TLV, as defined in Section 3.3, to advertise the detailed properties associated with the public-facing WAN port or ports and their associated IPsec tunnels. The SD-WAN Underlay Route carries control-plane information describing an SD-WAN WAN port and its tunnel properties; the SD-WAN NLRI is not itself installed as a route for forwarding user traffic. The Edge BGP Peer sends this information to its designated RR via a secure transport connection. Each BGP UPDATE containing an SD-WAN Underlay Route MUST include a Tunnel Encapsulation Attribute with an SD-WAN Hybrid Tunnel TLV. If an SD-WAN Underlay Route is received without the required Tunnel Encapsulation Attribute and SD-WAN Hybrid Tunnel TLV, the route MUST be handled as Treat-as-withdraw as specified in Section 3.8.3. 
 </t>
  <t>
  The SD-WAN Hybrid tunnel TLV within the Tunnel Encapsulation Attribute can include Sub-TLVs for 
@@ -628,7 +540,7 @@ frequency and size of BGP UPDATE messages.
  <t>
  </t>
 <section title="NLRI for SD-WAN Underlay Route">
-<t>A new NLRI SAFI (SD-WAN SAFI=74) is introduced within the MP_REACH_NLRI Path Attribute of [RFC4760] for advertising the detailed properties of SD-WAN tunnels terminated at the WAN ports of the edge nodes. The SD-WAN SAFI uses the Tunnel Encapsulation Attribute and Tunnel TLV/Sub-TLV encodings defined in [RFC9012]. Because SAFI 74 is outside the AFI/SAFIs for which [RFC9012] defines applicability procedures, this document defines the use of the Tunnel Encapsulation Attribute with SAFI 74, including the associated next-hop, propagation, and validation procedures. This is a "typed" NLRI (similar to other "typed" NLRIs as described in [RFC7606]). The format is shown in figure 2.  
+<t>A new NLRI SAFI (SD-WAN SAFI=74) is introduced within the MP_REACH_NLRI Path Attribute of [RFC4760] for advertising the detailed properties of SD-WAN tunnels terminated at the WAN ports of the edge nodes. The SD-WAN SAFI uses the Tunnel Encapsulation Attribute and Tunnel TLV/Sub-TLV encodings defined in [RFC9012]. Because SAFI 74 is outside the AFI/SAFIs for which [RFC9012] defines applicability procedures, this document defines the use of the Tunnel Encapsulation Attribute with SAFI 74, including the associated next-hop, propagation, and validation procedures. This is a "typed" NLRI (similar to other "typed" NLRIs as described in [RFC7606]). The format is shown in Figure 1.  
 </t>
 <t>For AFI/SAFI 1/74, the MP_REACH_NLRI Next Hop Network Address field MUST contain a 4-octet IPv4 address. For AFI/SAFI 2/74, it MUST contain a 16-octet IPv6 address. The Next Hop MUST contain a reachable address of the advertising SD-WAN edge node, typically its loopback address or SD-WAN Node ID.</t>
 <t>
@@ -680,16 +592,10 @@ frequency and size of BGP UPDATE messages.
 	</t>
 	<t hangText="Length:">The value of the Length field for Route-Type 1 MUST be either 12 octets 
 	(when the SD-WAN Node ID is an IPv4 address) or 24 octets (when the SD-WAN Node ID is an IPv6 address). 
-	Any other value is invalid. Error handling for an invalid Length field is specified in Section 3.7.2.</t>
+	Any other value is invalid. Error handling for an invalid Length field is specified in Section 3.8.2.</t>
 	<t hangText="Port-Local-ID:"> SD-WAN edge node Port identifier, which is locally significant. 
 	If the SD-WAN NLRI applies to multiple WAN ports, this field is zero.</t>
-	<t hangText="SD-WAN-Color:"> identifies a group of Hybrid SD-WAN tunnels that may span multiple 
-	SD-WAN logical tunnels co-located at the same site. The BGP Peer supporting SD-WAN uses this SD-WAN-Color 
-	value to allow local policy to correlate client routes identified by the Color Extended Community 
-	to a specific group of Hybrid SD-WAN tunnels or a specific set of underlay tunnels within the Hybrid 
-    SD-WAN tunnel. If the SD-WAN-Color represents all tunnels at a site, it effectively serves as a site-level identifier. 
-	If no matching SD-WAN-Color is found, the client route is not forwarded over any SD-WAN tunnels. 
-	However, local configuration MAY remove this restriction. </t>
+	<t hangText="SD-WAN-Color:"> Identifies a group of SD-WAN underlay tunnels. Multiple underlay tunnels, including tunnels terminating on different WAN ports or SD-WAN edge nodes, MAY be associated with the same SD-WAN-Color. The use of SD-WAN-Color in associating SD-WAN Underlay Routes with Client Routes is described in Section 3.7. </t>
 	<t hangText="SD-WAN Node ID:"> This field carries the IPv4 or IPv6 address of the SD-WAN edge node (C-PE). 
 	For IPv4 SD-WAN NLRI (AFI/SAFI 1/74), this field contains a 4-octet IPv4 address representing a /32 host address. 
 	For IPv6 SD-WAN NLRI (AFI/SAFI 2/74), this field contains a 16-octet IPv6 address representing a /128 host address. 
@@ -703,8 +609,8 @@ frequency and size of BGP UPDATE messages.
  <t> Upon receiving an SD-WAN NLRI, the following validation steps are performed:
  <list style="hanging"> 
  <t hangText ="- Route Type Validation:"> The Route Type field MUST be equal to 1. An SD-WAN NLRI with an unrecognized Route Type MUST be discarded and MUST NOT be propagated, as specified for typed NLRIs in Section 5.4 of [RFC7606].</t> 
- <t hangText="- Length Field Validation:">For Route type1, the Length field MUST contain a value of either 12 or 24 octets, as defined in Section 3.3.1. 
- Any other value renders the SD-WAN NLRI malformed. Error handling is specified in Section 3.7.2.</t>
+ <t hangText="- Length Field Validation:">For Route type1, the Length field MUST contain a value of either 12 or 24 octets, as defined in Section 3.2.1. 
+ Any other value renders the SD-WAN NLRI malformed. Error handling is specified in Section 3.8.2.</t>
  <t hangText="- SD-WAN Node ID:">If Length = 12, the SD-WAN Node-ID field contains an IPv4 Unicast address. 
  If Length = 24, the SD-WAN Node-ID field contains an IPv6 Unicast address. The SD-WAN Node-ID MUST be a valid unicast address. Otherwise, the NLRI must be discarded.</t>
 </list> 
@@ -720,8 +626,90 @@ frequency and size of BGP UPDATE messages.
 </t>
  </section> 
 </section> 
+<section title="SD-WAN Hybrid Tunnel TLV Encoding">
+<t> 
+<list style="hanging">
+<t hangText="Name:"> SD-WAN Hybrid Tunnel </t>
+<t hangText="Code:"> 25 (IANA assigned)</t>
+<t hangText="Description:">The SD-WAN Hybrid Tunnel identifies a virtual tunnel that overlays a 
+path across a set of underlay links between two BGP peers. These underlay links may use various technologies 
+(e.g., MPLS, Layer 2 direct connections, or Layer 3 public Internet). The term hybrid reflects that different 
+types of underlay links can be used simultaneously.</t>
+<t hangText="Encoding:">Per [RFC9012], the SD-WAN Hybrid Tunnel Type MAY be encoded using either of the following two BGP attributes: the Tunnel Encapsulation Attribute, or the Encapsulation Extended Community as a "barebones" tunnel identification. The encoding of the SD-WAN Hybrid Tunnel Type in each of these BGP attributes is described below. The applicability of these two forms to Client Routes and SD-WAN Underlay Routes is specified in Section 3.1. 
+<list style="hanging">
+<t hangText="SD-WAN Hybrid tunnel Encoded in Encapsulation Extended Community:"> As specified in Section 3.1, the SD-WAN Hybrid Tunnel Type encoded in the Encapsulation Extended Community is used only for Client Route advertisements. The BGP Next Hop identifies the Tunnel Egress Endpoint and SHOULD be set to a reachable address of the advertising SD-WAN edge node. </t>
+<t hangText="SD-WAN Hybrid tunnel Encoded in Tunnel Encapsulation Attribute:"> As specified in Section 3.1, the SD-WAN Hybrid Tunnel TLV encoded in the Tunnel Encapsulation Attribute can be used for both Client Route advertisements and SD-WAN Underlay Route advertisements. The SD-WAN Hybrid Tunnel TLV may contain the Sub-TLVs permitted for the associated route type, as specified in Section 3.1 and summarized in Figure 3.</t>
+
+<t>For SD-WAN Underlay Routes using SAFI 74, if a Tunnel Egress Endpoint Sub-TLV is not included in the SD-WAN Hybrid Tunnel TLV, it is treated as if a Tunnel Egress Endpoint Sub-TLV with an Address Family value of 0 were included. For Client Routes, Tunnel Egress Endpoint processing follows [RFC9012]. Figure 3 summarizes this Sub-TLV support in a tabular format.
+</t>
+</list>
+</t>
+</list>
+</t>
+<t>
+ <figure anchor="Sub-TLV Support for Client and Underlay Routes"
+           title="Sub-TLV Support for Client and Underlay Routes">
+           <artwork><![CDATA[  
+		   
+Client Routes AFI/SAFI = 1/1, 2/1, 1/128, 2/128
+Underlay Routes AFI/SAFI = 1/74 and 2/74 
+                         
+Sub-TLV            Code  Client Routes  Underlay Routes      
+------            ----  -------------  ---------------
+Encapsulation        1   not valid     not valid  
+Protocol             2   not valid     not valid  
+Color                4   not valid     not valid            
+Load-Balancing Block 5   not valid     not valid  
+Tunnel Egress EP     6   required      required *1
+DS Field             7   not valid     not valid      
+UDP Dest. Port       8   not valid     not valid  
+Embedded Label H.    9   not valid     not valid   
+MPLS label Stack    10   not valid     not valid   
+Prefix-SID          11   not valid     not valid    
+Preference          12   not valid     not valid  
+Binding SID         13   not valid     not valid  
+ENLP                14   not valid     not valid  
+Priority            15   not valid     not valid   
+SPI/SI              16   not valid     not valid 
+SRv6 Binding SID    20   not valid     not valid   
+IPsec SA ID         64   valid         valid   
+Extended Port Attr  65   not valid     valid  
+IPsec SA Rekey Cnt  67   valid         valid  
+IPsec Public Key    68   valid         valid  
+IPsec SA Proposal   69   valid         valid   
+Simplified IPsec SA 70   valid         valid   
+
+
+*1 - For SD-WAN Underlay Routes, if a Tunnel Egress Endpoint Sub-TLV 
+     is not included, it is treated as if a Tunnel Egress Endpoint 
+	 Sub-TLV with AFI 0 were included. 
+	]]></artwork>
+ </figure>
+</t>
+<t>The Color Sub-TLV defined in [RFC9012] is not used by the SD-WAN procedures defined in this document. Client Routes carry the Color Extended Community, while SD-WAN Underlay Routes carry the SD-WAN-Color field in the SAFI-74 NLRI. The receiving BGP speaker correlates these values as described in Sections 3.5 and 3.7.</t>
+
+<section title="Summary of Validation Procedure">
+<t> The SD-WAN Hybrid Tunnel TLV and its Sub-TLVs MUST first be validated for correct encoding and applicability as specified in this section and Section 3.4. Route-specific validation procedures are specified in Section 3.5.2 for Client Routes and Section 3.6.2 for SD-WAN Underlay Routes. Error handling is specified in Section 3.8.
+
+After the SD-WAN Hybrid Tunnel TLV has been validated, the receiving BGP speaker processes it according to the applicable route procedure.  
+</t>
+</section>  
+
+<section title="Processing Considerations for SD-WAN Hybrid Tunnel Encoding">
+<t> When an Encapsulation Extended Community containing the SD-WAN Hybrid Tunnel Type is attached to a Client Route, the detailed SD-WAN tunnel attributes are not included in the same BGP UPDATE. Instead, those attributes are advertised separately using SD-WAN Underlay Routes. Sections 3.2 and 3.4 describe the SD-WAN Underlay Route and the associated SD-WAN-specific Sub-TLVs. The SD-WAN Underlay Route is originated by the C-PE, and its BGP Next Hop is set to a reachable address of the advertising C-PE, typically its loopback address. The relationship between the Client Route and the corresponding SD-WAN Underlay Routes is determined as described in Section 3.7. This separation allows Client Routes and tunnel information to be advertised and updated independently and avoids including the potentially large amount of IPsec SA, cryptographic key, and related tunnel information in each Client Route UPDATE.
+</t>
+<t>When the Tunnel Encapsulation Attribute with SD-WAN Hybrid Tunnel TLV is attached to the client route, 
+the detailed underlay tunnel attributes, such as IPsec-related parameters, are included directly in the 
+same BGP UPDATE as the client route. As a result, there is no need for a separate UPDATE message associated 
+with the C-PE loopback address. However, this approach means that any changes to underlay attributes (e.g., IPsec keys or cryptographic parameters) 
+necessitate re-advertising the client route with an updated Tunnel Encapsulation Attribute, which can increase both the 
+frequency and size of BGP UPDATE messages.    
+</t> 
+</section> 
+</section> 
+
  <section title="SD-WAN-Specific Sub-TLVs">
- <t> The SD-WAN-specific Sub-TLVs defined in this section allow BGP UPDATE messages to carry tunnel, port, and IPsec-related parameters associated with SD-WAN Hybrid Tunnels to authorized peers. For the IPsec-related Sub-TLVs, BGP does not establish, negotiate, derive, or maintain IPsec SAs. BGP validation of these Sub-TLVs is limited to their encoding and syntactic validity. Semantic validation of IPsec parameters, including algorithm suitability, transform compatibility, key validity, and supported key-exchange groups, is performed by the IPsec function. A syntactically valid advertisement whose IPsec parameters cannot be used by the IPsec function is not considered malformed for BGP processing. The creation and operation of an IPsec SA, including algorithm validation, key derivation, SA state management, rekeying, and packet protection, are performed by the IPsec implementation according to [RFC4301] and, when IKEv2 is used, [RFC7296], together with local policy. While these Sub-TLV formats could potentially be reused in other applications that require SD-WAN-related signaling over BGP, this document defines their semantics and behavior specifically within the SD-WAN Edge Discovery framework. 
+ <t> The SD-WAN-specific Sub-TLVs defined in this section allow BGP UPDATE messages to carry tunnel, port, and IPsec-related parameters associated with SD-WAN Hybrid Tunnels to authorized peers. For the IPsec-related Sub-TLVs, BGP does not establish, negotiate, derive, or maintain IPsec SAs. BGP validation of these Sub-TLVs is limited to their encoding and syntactic validity. Semantic validation of IPsec parameters, including algorithm suitability, transform compatibility, key validity, and supported key-exchange groups, is performed by the IPsec Function. A syntactically valid advertisement whose IPsec parameters cannot be used by the IPsec Function is not considered malformed for BGP processing. The creation and operation of an IPsec SA, including algorithm validation, key derivation, SA state management, rekeying, and packet protection, are performed by the IPsec Function according to [RFC4301] and, when IKEv2 is used, [RFC7296], together with local policy. While these Sub-TLV formats could potentially be reused in other applications that require SD-WAN-related signaling over BGP, this document defines their semantics and behavior specifically within the SD-WAN Edge Discovery framework. 
 </t>
 <t> If any Sub-TLV is malformed, error handling MUST follow the procedure in Section 13 of <xref target="RFC9012"></xref>. 
 </t>  
@@ -784,7 +772,7 @@ operational state changes without resending full SA parameter sets, and allowing
  <section title="IPsec SA Rekey Counter Sub-TLV"> 
  <t> The IPsec SA Rekey Counter Sub-TLV carries rekey-related information associated with a specific IPsec Security Association (SA). The SA is identified by the 32-bit Security Parameter Index (SPI) carried in this Sub-TLV. Together with the IPsec protocol and destination address associated with the advertised tunnel endpoint, the SPI identifies the inbound IPsec SA as described in <xref target="RFC4301"/>.</t> 
  
- <t> The Rekey Counter and Nonce Data defined in this Sub-TLV are SD-WAN-specific fields. They are not IKEv2 protocol fields and do not require IKEv2 signaling. BGP carries these fields as part of the SD-WAN tunnel information but does not interpret them for route selection or BGP processing. </t>
+ <t> The Rekey Counter and Nonce Data defined in this Sub-TLV are SD-WAN-specific fields. They are not IKEv2 protocol fields and do not require IKEv2 signaling. BGP carries these fields as part of the SD-WAN tunnel information but does not interpret them for route selection or BGP processing; interpretation of these fields is left to the IPsec Function. </t>
  
  <t>
  <list style="hanging">
@@ -826,9 +814,9 @@ operational state changes without resending full SA parameter sets, and allowing
 	</t> 
 	<t>Flags (7 bits): Reserved for future use. These bits 
 	    MUST be set to zero and MUST be ignored upon receipt.</t> 
-	<t>Rekey Counter (64 bits): Carries an unsigned counter associated with rekeying of the identified IPsec SA. The Rekey Counter is opaque to BGP and is passed unchanged to the SD-WAN/IPsec implementation. BGP does not use this value for route selection, freshness determination, or replay detection. </t>
+	<t>Rekey Counter (64 bits): Carries an unsigned counter associated with rekeying of the identified IPsec SA. The Rekey Counter is opaque to BGP and is passed unchanged to the SD-WAN/IPsec Function. BGP does not use this value for route selection, freshness determination, or replay detection. </t>
 	<t>SPI: Carries the 32-bit Security Parameter Index of the IPsec SA. Together with the IPsec protocol and destination address associated with the advertised tunnel endpoint, the SPI identifies the inbound IPsec SA as described in <xref target="RFC4301"/>.</t>
-	 <t>Nonce Data: Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. The nonce can be used by the receiving SD-WAN/IPsec implementation as a freshness value when processing SA information. Generation, storage, comparison, and replay handling of the nonce are outside the scope of BGP.</t>
+	 <t>Nonce Data: Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. The nonce can be used by the receiving SD-WAN/IPsec Function as a freshness value when processing SA information. Generation, storage, comparison, and replay handling of the nonce are outside the scope of BGP.</t>
     </list>
 	</t>
   <t hangText="Sub-TLV Error Handling:"> The Sub-TLV is malformed if the Length field is not equal to 18 + Nonce Length, or if the Nonce Length is less than 8 or greater than 237 octets.</t> 
@@ -1004,13 +992,13 @@ Malformed Sub-TLVs are handled according to [RFC9012].
 	</t>
 	<t hangText="Algorithms (16 bits):"> Identifies the cryptographic algorithm used by the advertised SA. When SA-Type = 1 (AH), the Algorithm field identifies the AH integrity algorithm using the corresponding value from the IANA Integrity Algorithm registry. When SA-Type = 2 (ESP), the Algorithm field identifies the ESP encryption algorithm using the corresponding value from the IANA Encryption Algorithm registry.</t> 	
 
-	<t hangText="Rekey Counter (4 octet):">  Carries an unsigned counter associated with key rotation for the advertised IPsec SA. The Rekey Counter identifies the key generation associated with the advertised keying material. Interpretation of the counter and selection of the active key are performed by the SD-WAN/IPsec implementation. The Rekey Counter is opaque to BGP.</t>
+	<t hangText="Rekey Counter (4 octet):">  Carries an unsigned counter associated with key rotation for the advertised IPsec SA. The Rekey Counter identifies the key generation associated with the advertised keying material. Interpretation of the counter and selection of the active key are performed by the SD-WAN/IPsec Function. The Rekey Counter is opaque to BGP.</t>
 	<t hangText="key1 length (8 bits):"> Specifies the length, in octets, of the Key 1 field. The required key length is determined by the selected Algorithm and the configured IPsec security profile.</t>
 	<t hangText="Public Key 1:"> Carries one generation of keying material for the advertised IPsec SA. The encoding and required length of the keying material are determined by the selected Algorithm and the configured IPsec security profile.</t>
 	<t hangText="key2 length (8 bits):"> Specifies the length, in octets, of the Key 2 field. The required key length is determined by the selected Algorithm and the configured IPsec security profile.</t>
-	<t hangText="Public Key 2:"> Carries an alternate generation of keying material for the advertised IPsec SA. Key 1 and Key 2 allow keying material for a new generation to be distributed while the previous generation remains available during rekeying. Selection and retirement of the active key generation are performed by the SD-WAN/IPsec implementation and are outside the scope of BGP.</t>
+	<t hangText="Public Key 2:"> Carries an alternate generation of keying material for the advertised IPsec SA. Key 1 and Key 2 allow keying material for a new generation to be distributed while the previous generation remains available during rekeying. Selection and retirement of the active key generation are performed by the SD-WAN/IPsec Function and are outside the scope of BGP.</t>
 	<t hangText="nonce-length (8 bits):"> Specifies the length, in octets, of the Nonce field. The Nonce is an SD-WAN-specific value. The Nonce Length MUST be at least 8 octets. A Nonce Length of at least 16 octets is RECOMMENDED. The combined Key 1, Key 2, and Nonce lengths MUST satisfy the Sub-TLV Length constraint specified above.</t>
-	<t hangText="Nonce:"> Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. Generation and processing of the nonce are performed by the SD-WAN/IPsec implementation and are outside the scope of BGP.</t>
+	<t hangText="Nonce:"> Carries an SD-WAN-specific nonce associated with the advertised IPsec SA information. Generation and processing of the nonce are performed by the SD-WAN/IPsec Function and are outside the scope of BGP.</t>
 	<t hangText="Duration (32 bits):"> Specifies the lifetime of the advertised IPsec SA in seconds. 
 	</t> 
   </list>
@@ -1210,13 +1198,7 @@ Malformed Sub-TLVs are handled according to [RFC9012].
 <t>Client routes using IPv4 Unicast (AFI/SAFI 1/1), IPv6 Unicast (2/1), VPN-IPv4 (1/128), or VPN-IPv6 (2/128) can be forwarded over an SD-WAN Hybrid Tunnel using one of the following two signaling mechanisms:</t>
 
  <list style="hanging">
-<t hangText="Encapsulation Extended Community with SD-WAN SAFI:">In this approach, the 
-client route is advertised using Encapsulation Extended Community with the SD-WAN Hybrid tunnel type. 
-The detailed tunnel properties, such as IPsec SAs, WAN port attributes, 
-NAT properties, and other parameters, are advertised separately via BGP UPDATE 
-messages using the SD-WAN SAFI. The SD-WAN Node ID, carried as the Next Hop in 
-client route advertisements and as the SD-WAN Node ID in SD-WAN SAFI underlay route advertisements, 
-enables receiving BGP nodes to associate client routes with the correct underlay tunnels.</t>
+<t hangText="Encapsulation Extended Community with SD-WAN SAFI:">In this approach, the Client Route is advertised with an Encapsulation Extended Community containing the SD-WAN Hybrid Tunnel Type. The detailed tunnel properties, such as IPsec SAs, WAN port attributes, NAT properties, and other parameters, are advertised separately in BGP UPDATE messages using the SD-WAN SAFI. The BGP Next Hop in the Client Route identifies the tunnel egress endpoint, while the corresponding SD-WAN Underlay Routes advertise the detailed tunnel information. The association between Client Routes and SD-WAN Underlay Routes is described in Section 3.7.</t>
 <t hangText="Tunnel Encapsulation Attribute:">Alternatively, client routes UPDATEs can include all 
 tunnel-related information directly in the same BGP UPDATE using the Tunnel Encapsulation Attribute. 
 The SD-WAN Hybrid Tunnel TLV specifies the outer tunnel through which the underlay tunnel identified 
@@ -1310,7 +1292,7 @@ same tunnel attributes by using the Color-EC.</t>
 The Tunnel Egress End Point Sub-TLV (assumed or sent) indicates the other 
 tunnel through which these underlay tunnels operate.  
  </t>
- <t>Remote nodes use the SD-WAN information carried in the SD-WAN SAFI, together with the applicable Color and local SD-WAN policy, to associate Client Routes with the tunnel attributes advertised by the corresponding SD-WAN edge nodes. The SD-WAN Node ID identifies an individual SD-WAN edge node, while the SD-WAN-Color identifies a group of eligible SD-WAN tunnels. Tunnels associated with the same SD-WAN-Color MAY terminate on different WAN ports or different SD-WAN edge nodes. This enables multiple SD-WAN edge nodes to provide connectivity for the same Color group, subject to local policy. The BGP Next Hop identifies a reachable address of the advertising SD-WAN edge node and is not required to equal the SD-WAN Node ID.</t>
+ <t>Remote nodes use the SD-WAN information carried in the SD-WAN SAFI to identify the advertising SD-WAN edge nodes, their WAN-facing tunnel endpoints, and the associated tunnel groups and tunnel attributes. The SD-WAN Node ID identifies an individual SD-WAN edge node, while the SD-WAN-Color identifies a group of SD-WAN tunnels. Tunnels associated with the same SD-WAN-Color MAY terminate on different WAN ports or different SD-WAN edge nodes. The BGP Next Hop identifies a reachable address of the advertising SD-WAN edge node and is not required to equal the SD-WAN Node ID. The association of these advertised underlay tunnels with Client Routes is described in Section 3.7.</t>
  
  <t>A single WAN port on an SD-WAN edge node may participate in multiple SD-WAN Hybrid Tunnels, for example, separate tunnels from the same WAN port to different remote SD-WAN edge nodes. Each such tunnel is associated with its corresponding remote tunnel endpoint and is processed independently according to local SD-WAN policy and the applicable tunnel attributes.</t>
  <t>Normal BGP best-path selection applies when multiple paths for the same SD-WAN NLRI are received. The RR reflects authorized SD-WAN Underlay Routes within the SD-WAN administrative domain according to [RFC4456].</t>
@@ -1321,7 +1303,7 @@ tunnel through which these underlay tunnels operate.
  <t>
  The procedure for processing underlay routes follows the following steps:</t>
  <list style="hanging">
- <t hangText="1. Check for Well-Formed SD-WAN Hybrid Tunnel TLV:"> Only one SD-WAN Hybrid Tunnel TLV is permitted in the Tunnel Encapsulation Attribute associated with an SD-WAN Underlay Route. If more than one SD-WAN Hybrid Tunnel TLV is present, the Tunnel Encapsulation Attribute is considered malformed and MUST be handled according to Section 3.7.1.
+ <t hangText="1. Check for Well-Formed SD-WAN Hybrid Tunnel TLV:"> Only one SD-WAN Hybrid Tunnel TLV is permitted in the Tunnel Encapsulation Attribute associated with an SD-WAN Underlay Route. If more than one SD-WAN Hybrid Tunnel TLV is present, the Tunnel Encapsulation Attribute is considered malformed and MUST be handled according to Section 3.8.1.
  An SD-WAN Hybrid Tunnel TLV is well-formed using only Sub-TLVs valid for association with the Underlay Route (see Section 3.1). Multiple IPsec SA ID Sub-TLVs MAY be present if the IPsec SA Identifiers are unique. If an IPsec SA Identifier is duplicated, the subsequent Sub-TLV is ignored and not propagated. If multiple Extended Port Sub-TLVs exist, they MUST be validated in Step 3. For all other valid Sub-TLVs (see Section 3.1), only the first instance is processed; subsequent instances are ignored.
   </t>
  <t hangText="2. Validate Tunnel Egress Endpoint:"> The Tunnel Egress Endpoint validation 
@@ -1335,20 +1317,20 @@ tunnel through which these underlay tunnels operate.
  each Extended Port Attribute Sub-TLV describes the properties of a single WAN port. 
  Therefore, multiple Extended Port Sub-TLVs may be present when the SD-WAN edge node has multiple WAN ports.
   Each Sub-TLV MUST be validated for correct encoding and field values according to Section 3.4.6.
-If an Extended Port Attribute Sub-TLV is malformed, it MUST be handled according to Section 13 of [RFC9012] and Section 3.7.1 of this document. </t>
+If an Extended Port Attribute Sub-TLV is malformed, it MUST be handled according to Section 13 of [RFC9012] and Section 3.8.1 of this document. </t>
  <t hangText="4. Validate each NLRI:"> Each typed NLRI in the SD-WAN Underlay MUST be well-formed, 
- meaning it conforms to the structure defined in Section 3.3.1,  including correct field lengths and ordering. 
+ meaning it conforms to the structure defined in Section 3.2.1,  including correct field lengths and ordering. 
  A MALFORMED NLRI MUST be discarded; implementations MAY log an error.  
  </t>
- <t hangText="5. Validate Next Hop:"> The MP_REACH_NLRI Next Hop MUST satisfy the encoding requirements specified in Section 3.3.1 and identify a reachable address of the advertising SD-WAN edge node. The SD-WAN Underlay Route carries tunnel-control information and is not installed as a forwarding route for user traffic.
+ <t hangText="5. Validate Next Hop:"> The MP_REACH_NLRI Next Hop MUST satisfy the encoding requirements specified in Section 3.2.1 and identify a reachable address of the advertising SD-WAN edge node. The SD-WAN Underlay Route carries tunnel-control information and is not installed as a forwarding route for user traffic.
  </t>
  </list>
  
  </section> 
  <section title="Underlay Routes with Port-Local-ID of Zero">
- <t> As specified in Section 3.3.1, a Route Type 1 NLRI includes the tuple (Port-Local-ID, SD-WAN-Color, SD-WAN Node ID). The Port-Local-ID field MAY be set to zero to indicate that the NLRI applies to all WAN ports on the identified SD-WAN node, effectively representing tunnel attributes at the node level rather than a specific port.</t>
+ <t> As specified in Section 3.2.1, a Route Type 1 NLRI includes the tuple (Port-Local-ID, SD-WAN-Color, SD-WAN Node ID). The Port-Local-ID field MAY be set to zero to indicate that the NLRI applies to all WAN ports on the identified SD-WAN node, effectively representing tunnel attributes at the node level rather than a specific port.</t>
 
- <t>When Port-Local-ID = 0, the receiving BGP speaker SHOULD apply local policy to determine how to associate client routes with underlay tunnels. This local policy may prefer tunnels from specific SD-WAN nodes, or choose among SD-WAN Colors based on administrative preference, link type, path performance, or service-level objectives. The exact selection logic is implementation-specific.</t>
+ <t>When Port-Local-ID = 0, the SD-WAN NLRI applies at the node level rather than to a specific WAN port. Multiple such NLRIs MAY advertise different SD-WAN-Color values for the same SD-WAN Node ID, representing different groups of underlay tunnels. The use of these tunnel groups in association with Client Routes is described in Section 3.7.</t>
 
  <t>It is valid for multiple such node-level NLRIs to be received, each advertising different SD-WAN Colors for the same node. For example, the following three NLRIs may be received (within one or more UPDATE messages): 
 <list>
@@ -1359,12 +1341,20 @@ If an Extended Port Attribute Sub-TLV is malformed, it MUST be handled according
 <t> Port-Local-ID (0), SD-WAN-Color (30), SD-WAN Node ID (192.0.2.2).
 </t>
 </list>
-These indicate that node 192.0.2.2 supports multiple tunnel groups, each classified by a different SD-WAN-Color. For example, these Colors may correspond to service tiers such as gold, silver, and bronze. The SD-WAN-Color field is used to correlate underlay tunnels with client routes that carry a matching Color Extended Community. If no match is found, the client route may not be forwarded over any SD-WAN tunnel. 
+These indicate that node 192.0.2.2 supports multiple tunnel groups, each classified by a different SD-WAN-Color. For example, these Colors may correspond to service tiers such as gold, silver, and bronze. The use of SD-WAN-Color to correlate SD-WAN Underlay Routes with Client Routes carrying a matching Color Extended Community, including the behavior when no matching underlay tunnel is available, is described in Section 3.7. 
 </t>
  </section>
  
  </section>
- 
+
+ <section title="Interaction Between Client Routes and SD-WAN Underlay Routes ">
+	<t>Client Routes and SD-WAN Underlay Routes are advertised independently. Client Routes represent customer prefix reachability, while SD-WAN Underlay Routes advertise the WAN-facing endpoints and tunnel properties used to establish and maintain SD-WAN Hybrid Tunnels.</t>
+	<t>When a Client Route is advertised using the Encapsulation Extended Community with the SD-WAN Hybrid Tunnel Type, the Encapsulation Extended Community identifies the tunnel type and the BGP Next Hop identifies the tunnel egress endpoint. If the Client Route also carries a Color Extended Community, the Color value identifies the set of SD-WAN Underlay Routes previously advertised with the same SD-WAN-Color that are eligible to carry the traffic. The SD-WAN Underlay Routes carry the detailed tunnel parameters independently using the SD-WAN SAFI.</t>
+	<t>Multiple SD-WAN Underlay Routes with the matching SD-WAN-Color MAY be eligible to carry the same Client Route. Local policy may select among the eligible tunnels based on the advertised tunnel properties and service requirements. If no matching eligible underlay tunnel is available, the Client Route is not forwarded over an SD-WAN Hybrid Tunnel unless local configuration permits another forwarding behavior.</t>
+	<t>Client Routes and SD-WAN Underlay Routes may be received in any order. If a Client Route is received before a matching eligible SD-WAN Underlay Route is available, the Client Route remains valid but is not used for forwarding over an SD-WAN Hybrid Tunnel until an eligible tunnel becomes available. If an associated SD-WAN Underlay Route is later withdrawn or becomes unavailable, that tunnel is no longer eligible for forwarding the Client Route; the Client Route itself is not withdrawn, and another eligible tunnel MAY be selected.</t>
+
+ </section>
+
  <section title="Error handling">
  <t>This section specifies the error-handling procedures for validation failures identified by the procedures in Sections 3.5 and 3.6. It covers Tunnel Encapsulation signaling and SD-WAN Underlay Route errors. 
 </t>
@@ -1417,7 +1407,7 @@ to create a "walled garden".
  that the client routes and associated tunnel information match with expected configurations. 
  This includes verifying that: 
  <list style ="symbol">
- <t>The Next Hop in the client route update matches a known SD-WAN Node ID.</t>
+ <t>The Next Hop in the Client Route update identifies an authorized and reachable tunnel egress endpoint associated with the advertising SD-WAN edge node.</t>
  <t>The tunnel's egress endpoints are reachable and authorized.</t>
  <t>The advertised SD-WAN-Color in the underlay NLRI matches the 
  Color Extended Community attached to the client route.(See section 2 with deployment and applicability).</t>
@@ -1443,7 +1433,7 @@ IPsec SA Rekey Counter Sub-TLV, IPsec Public Key Sub-TLV, and IPsec SA Proposal 
 </t>
 <t>For existing IPsec SAs, an SD-WAN node that receives the advertisement can simply use one of the existing SAs to forward traffic for the associated client routes. If multiple SAs are available for a given client route, local policy on the receiving SD-WAN node MAY determine which SA is selected. 
 </t>
-<t>When parameters carried in these Sub-TLVs are used to establish a new IPsec SA, the receiving SD-WAN node passes the advertised parameters to its IPsec function. The IPsec implementation determines whether the advertised transforms and algorithms are compatible with local configuration and performs SA establishment according to [RFC4301] and, when IKEv2 is used, [RFC7296]. These attributes, received via the Tunnel Encapsulation Attribute, provide the parameters associated with establishing the IPsec tunnel between local and remote WAN ports. BGP itself does not perform IPsec negotiation, compatibility checking, or SA establishment. If the IPsec implementation cannot use the advertised parameters, this does not by itself make the BGP advertisement malformed.</t>
+<t>When parameters carried in these Sub-TLVs are used to establish a new IPsec SA, the receiving SD-WAN node passes the advertised parameters to its IPsec Function. The IPsec Function determines whether the advertised transforms and algorithms are compatible with local configuration and performs SA establishment according to [RFC4301] and, when IKEv2 is used, [RFC7296]. These attributes, received via the Tunnel Encapsulation Attribute, provide the parameters associated with establishing the IPsec tunnel between local and remote WAN ports. BGP itself does not perform IPsec negotiation, compatibility checking, or SA establishment. If the IPsec Function cannot use the advertised parameters, this does not by itself make the BGP advertisement malformed.</t>
 
 <t>The C-PE devices do not attempt to negotiate IPsec SA parameters or transform sets with remote peers. Instead, the configurations must match as advertised. If there is a mismatch, either in the simple IPsec SA identifiers or in the detailed transform parameters, no tunnel is established. Implementations MAY discard incompatible proposals or log them for operational visibility. 
 </t>
@@ -1535,7 +1525,7 @@ respectively, no IPsec Tunnel will be established.</t>
  enable SD-WAN edge nodes to advertise underlay transport and tunnel parameters to their RR. 
  These parameters, once received, can be monitored and validated using existing BGP monitoring 
  tools such as BMP or route policy inspection frameworks. Operators SHOULD implement logging 
- and alerting mechanisms for cases where inconsistent or malformed Sub-TLVs are received, as specified in Section 3.7. 
+ and alerting mechanisms for cases where inconsistent or malformed Sub-TLVs are received, as specified in Section 3.8. 
  Misaligned parameters, such as mismatched IPsec SA IDs or invalid NAT indicators, 
  should trigger operational alerts to aid troubleshooting.
 </t>
@@ -1556,7 +1546,7 @@ respectively, no IPsec Tunnel will be established.</t>
 <t>
 These secure transport mechanisms for BGP provide different levels of protection against tampering or interception. Such protection is needed for BGP UPDATEs carrying SD-WAN information, including cryptographic attributes. Without such protection, the system may be vulnerable to spoofed tunnel attributes, unauthorized route injections, or replayed IPsec setup information.</t>  
 
-<t> As specified in Section 3.4, BGP only distributes IPsec-related parameters; IPsec SA establishment and operation are performed by the IPsec implementation according to <xref target="RFC4301"/> and, when IKEv2 is used, <xref target="RFC7296"/>.</t>
+<t> As specified in Section 3.4, BGP only distributes IPsec-related parameters; IPsec SA establishment and operation are performed by the IPsec Function according to <xref target="RFC4301"/> and, when IKEv2 is used, <xref target="RFC7296"/>.</t>
 
  <t>
  In closed or "walled garden" deployments, where SD-WAN edge nodes and the RR are within a trusted and secured environment, the risk of interception or tampering may be reduced. However, the peer-authentication and integrity requirements specified in Section 2.2 still apply.
